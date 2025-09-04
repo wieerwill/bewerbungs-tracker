@@ -1,0 +1,25 @@
+{
+  "name": "applicationapp",
+  "version": "1.0.0",
+  "description": "create your personal view of applications for jobs",
+  "main": "index.js",
+  "scripts": {
+    "dev": "NODE_ENV=development nodemon index.js",
+    "start": "NODE_ENV=production node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "diskdb": "^0.1.17",
+    "express": "^4.17.2",
+    "express-session": "^1.17.2",
+    "merge": "^2.1.1",
+    "morgan": "^1.10.0",
+    "pug": "^3.0.2",
+    "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15"
+  }
+}

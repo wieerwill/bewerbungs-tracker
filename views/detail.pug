@@ -1,0 +1,38 @@
+extends layout.pug
+block content
+    header
+        h1 #{job.title}
+    if msg
+        .message
+            small=msg
+    div.fullpage
+        p #{job.description}
+        p Notes: #{job.note}
+        div.buttonrow
+            if(job.applied)
+                a.button.success(href=`/toggle/${job._id}/applied`) Applied
+            if(!job.applied)
+                a.button.danger(href=`/toggle/${job._id}/applied`) Not Applied
+            if(job.answer)
+                a.button.success(href=`/toggle/${job._id}/answer`) Answered
+            if(!job.answer)
+                a.button.danger(href=`/toggle/${job._id}/answer`) Not Answered
+    div.halfpage
+        h3 Company
+        p #{job.company.name}
+        a(href=`https://${job.company.website}`)= job.company.website
+        p #{job.company.street}
+        p #{job.company.city}
+        p Notes: #{job.company.note}
+    div.halfpage
+        h3 Contact
+        p #{job.contact.name}
+        p #{job.contact.email}
+        p #{job.contact.telephone}
+        p Notes: #{job.contact.note}
+    div.buttonrow
+        a.button.primary(href="/" ) Overview
+        a.button.warning(href="/edit/"+job._id) Edit
+        a.button.danger(href="/delete/"+job._id) Delete
+    div.fullpage
+        p Job ID: #{job._id}

@@ -1,0 +1,45 @@
+extends layout
+block content
+    header
+        h1 Application/Application
+    if msg
+        .message
+            small= msg
+
+    a.button.primary.spacearound(href="/new") Add new Job
+
+    table(style='width:100%', border='1')
+        tr
+            th.nr #
+            th.job Job
+            th.company Company
+            th.applied Applied
+            th.answer Answer
+            th.actions Actions
+        each job, index in jobs
+            tr
+                td= index
+                td= job.title
+                td= job.company.name
+                td 
+                    if(job.applied)
+                        button.success Yes
+                    if(!job.applied)
+                        button.danger No
+                td
+                    if(job.answer)
+                        button.success Yes
+                    if(!job.answer)
+                        button.danger No
+                td
+                    a.button.success(href="/detail/"+job._id ) View
+                    a.button.warning(href="/edit/"+job._id) Edit
+                    a.button.danger(href="/delete/"+job._id) Delete
+        if jobs.length==0
+            tr
+                td
+                td No Jobs yet
+                td
+                td
+                td 
+                td

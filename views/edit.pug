@@ -1,0 +1,43 @@
+extends layout
+block content
+    header
+        h2 Edit Job #{job.title}
+    if msg
+        .message
+            small=msg
+        
+    .form
+        form(action=`/edit/${job._id}`,method="POST")
+            h3 Company
+            label(for="name") Name
+            input#name(type="text", name="companyName" value=`${job.company.name}` )
+            label(for="website") Website
+            input#website(type="text", name="companyWebsite" value=`${job.company.website}`)
+            label(for="street") Street
+            input#street(type="text", name="companyStreet" value=`${job.company.street}`)
+            label(for="city") City
+            input#city(type="text", name="companyCity" value=`${job.company.city}`)
+            label(for="note") Notes
+            textarea#notes(name="companyNote", cols="30", rows="3")  #{job.company.note}
+
+            h3 Contact
+            label(for="name") Name
+            input#name(type="text", name="contactName" value=`${job.contact.name}`)
+            label(for="email") Email
+            input#email(type="text", name="contactEmail" value=`${job.contact.email}`)
+            label(for="phone") Phone
+            input#phone(type="text", name="contactPhone" value=`${job.contact.phone}`)
+            label(for="note") Notes
+            textarea#note(name="contactNote", cols="30", rows="3") #{job.contact.note}
+
+            h3 Job
+            label(for="title") Title
+            input#title(type="text", name="jobTitle" value=`${job.title}`)
+            label(for="description") Description
+            textarea#description(name="jobDescription", cols="30", rows="3") #{job.description}
+            label(for="note") Notes
+            textarea#note(name="jobNote", cols="30", rows="3") #{job.note}
+
+            button.success(type="submit") Save
+        a(href="/") 
+            button.warning Abort

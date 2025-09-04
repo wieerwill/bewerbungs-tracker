@@ -1,0 +1,43 @@
+extends layout
+block content
+    header
+        h2 New Job
+    if msg
+        .message
+            small=msg
+        
+    .form
+        form(action="/new",method="POST")
+            h3 Company
+            label(for="name") Name
+            input#name(type="text", name="companyName")
+            label(for="website") Website
+            input#website(type="text", name="companyWebsite")
+            label(for="street") Street
+            input#street(type="text", name="companyStreet")
+            label(for="city") City
+            input#city(type="text", name="companyCity")
+            label(for="note") Notes
+            textarea#notes(name="companyNote", cols="30", rows="3")
+
+            h3 Contact
+            label(for="name") Name
+            input#name(type="text", name="contactName")
+            label(for="email") Email
+            input#email(type="text", name="contactEmail")
+            label(for="phone") Phone
+            input#phone(type="text", name="contactPhone")
+            label(for="note") Notes
+            textarea#note(name="contactNote", cols="30", rows="3")
+
+            h3 Job
+            label(for="title") Title
+            input#title(type="text", name="jobTitle")
+            label(for="description") Description
+            textarea#description(name="jobDescription", cols="30", rows="3")
+            label(for="note") Notes
+            textarea#note(name="jobNote", cols="30", rows="3")
+
+            button.success(type="submit") Save
+        a(href="/") 
+            button.warning Abort
