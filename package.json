@@ -11,15 +11,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "diskdb": "^0.1.17",
-    "express": "^4.17.2",
-    "express-session": "^1.17.2",
-    "merge": "^2.1.1",
-    "morgan": "^1.10.0",
-    "pug": "^3.0.2",
-    "uuid": "^8.3.2"
+    "better-sqlite3": "12.2.0",
+    "express": "5.1.0",
+    "express-session": "1.18.2",
+    "morgan": "1.10.1",
+    "pug": "3.0.3",
+    "uuid": "11.1.0"
   },
   "devDependencies": {
-    "nodemon": "^2.0.15"
+    "nodemon": "3.1.10"
   }
 }

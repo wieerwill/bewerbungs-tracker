@@ -1,38 +1,117 @@
-extends layout.pug
+extends layout
+
 block content
-    header
-        h1 #{job.title}
-    if msg
-        .message
-            small=msg
-    div.fullpage
-        p #{job.description}
-        p Notes: #{job.note}
-        div.buttonrow
-            if(job.applied)
-                a.button.success(href=`/toggle/${job._id}/applied`) Applied
-            if(!job.applied)
-                a.button.danger(href=`/toggle/${job._id}/applied`) Not Applied
-            if(job.answer)
-                a.button.success(href=`/toggle/${job._id}/answer`) Answered
-            if(!job.answer)
-                a.button.danger(href=`/toggle/${job._id}/answer`) Not Answered
-    div.halfpage
-        h3 Company
-        p #{job.company.name}
-        a(href=`https://${job.company.website}`)= job.company.website
-        p #{job.company.street}
-        p #{job.company.city}
-        p Notes: #{job.company.note}
-    div.halfpage
-        h3 Contact
-        p #{job.contact.name}
-        p #{job.contact.email}
-        p #{job.contact.telephone}
-        p Notes: #{job.contact.note}
-    div.buttonrow
-        a.button.primary(href="/" ) Overview
-        a.button.warning(href="/edit/"+job._id) Edit
-        a.button.danger(href="/delete/"+job._id) Delete
-    div.fullpage
-        p Job ID: #{job._id}
+  // Kopfkarte mit Titel und Status
+  .card
+    .card-header
+      h1= job && job.title ? job.title : 'Bewerbung'
+      .buttons
+        if job && job._id
+          a.btn.secondary(href="/") Übersicht
+          a.btn.warn(href=`/edit/${job._id}`) Bearbeiten
+          a.btn.danger(href=`/delete/${job._id}`) Löschen
+    if job && (job.applied !== undefined || job.answer !== undefined)
+      .stack-12
+        .buttons
+          // Applied Toggle
+          if job.applied
+            a.btn.secondary.active(href=`/toggle/${job._id}/applied`) Angeschrieben ✓
+          else
+            a.btn.secondary(href=`/toggle/${job._id}/applied`) Noch nicht angeschrieben
+          // Answer Toggle
+          if job.answer
+            a.btn.secondary.active(href=`/toggle/${job._id}/answer`) Antwort erhalten ✓
+          else
+            a.btn.secondary(href=`/toggle/${job._id}/answer`) Keine Antwort
+
+  if msg
+    .card
+      p.muted= msg
+
+  // Beschreibung / Notizen
+  if job && (job.description || job.note)
+    .card
+      if job.description
+        h2 Beschreibung
+        p!= job.description
+      if job.note
+        h2 Notizen
+        p!= job.note
+
+  // Zwei Spalten: Unternehmen & Kontakt
+  .row.row-2
+    .card
+      h2 Unternehmen
+      - const company = job && job.company ? job.company : {};
+      - const site = company && company.website ? (company.website.startsWith('http') ? company.website : `https://${company.website}`) : null;
+      .meta-grid
+        if company.name
+          .meta-item
+            span.meta-label Name
+            span.meta-value= company.name
+        if site
+          .meta-item
+            span.meta-label Website
+            span.meta-value
+              a(href=site rel="noopener")= company.website
+        if company.street
+          .meta-item
+            span.meta-label Straße
+            span.meta-value= company.street
+        if company.city
+          .meta-item
+            span.meta-label Stadt
+            span.meta-value= company.city
+      if company.note
+        .stack-12
+          h3 Notizen
+          p!= company.note
+
+    .card
+      h2 Kontakt
+      - const contact = job && job.contact ? job.contact : {};
+      - const phone = contact && (contact.phone || contact.telephone) ? (contact.phone || contact.telephone) : null;
+      .meta-grid
+        if contact.name
+          .meta-item
+            span.meta-label Name
+            span.meta-value= contact.name
+        if contact.email
+          .meta-item
+            span.meta-label E-Mail
+            span.meta-value
+              a(href=`mailto:${contact.email}`)= contact.email
+        if phone
+          .meta-item
+            span.meta-label Telefon
+            span.meta-value
+              a(href=`tel:${phone}`)= phone
+      if contact.note
+        .stack-12
+          h3 Notizen
+          p!= contact.note
+
+  // Footer-Karte mit Meta
+  .card
+    h2 Meta
+    .meta-grid
+      if job && job._id
+        .meta-item
+          span.meta-label Job ID
+          span.meta-value= job._id
+      if job && job.applied !== undefined
+        .meta-item
+          span.meta-label Applied
+          span.meta-value
+            if job.applied
+              span.badge.badge-ok Ja
+            else
+              span.badge.badge-no Nein
+      if job && job.answer !== undefined
+        .meta-item
+          span.meta-label Answer
+          span.meta-value
+            if job.answer
+              span.badge.badge-ok Ja
+            else
+              span.badge.badge-no Nein

@@ -1,45 +1,76 @@
 extends layout
+
 block content
-    header
-        h1 Application/Application
-    if msg
-        .message
-            small= msg
+  .card
+    .card-header
+      h1 Bewerbungen
+      .buttons
+        a.btn(href="/new") + Neue Bewerbung
+    // Toolbar: search (GET /?q=...)
+    form(action="/", method="GET", role="search", aria-label="Suche", class="stack-12")
+      .row.row-3
+        .field
+          label(for="q") Suche
+          input#q(type="text", name="q", value=(typeof q !== 'undefined' ? q : ''), placeholder="Titel, Firma, Ort …")
+        .field
+          label(for="status") Status (optional)
+          select#status(name="status")
+            option(value="" selected=(!status)) — Alle —
+            option(value="applied" selected=(status==='applied')) Angeschrieben
+            option(value="not-applied" selected=(status==='not-applied')) Nicht angeschrieben
+            option(value="answered" selected=(status==='answered')) Antwort erhalten
+            option(value="no-answer" selected=(status==='no-answer')) Keine Antwort
+        .field
+          label(for="sort") Sortieren
+          select#sort(name="sort")
+            option(value="" selected=(!sort)) Neueste zuerst
+            option(value="title" selected=(sort==='title')) Titel A–Z
+            option(value="company" selected=(sort==='company')) Firma A–Z
+      .form-actions.buttons
+        button.btn(type="submit") Anwenden
+        a.btn.secondary(href="/") Zurücksetzen
 
-    a.button.primary.spacearound(href="/new") Add new Job
+  if msg
+    .card
+      p.muted= msg
 
-    table(style='width:100%', border='1')
+  if jobs && jobs.length
+    table.table
+      thead
         tr
-            th.nr #
-            th.job Job
-            th.company Company
-            th.applied Applied
-            th.answer Answer
-            th.actions Actions
+          th.nr #
+          th Job
+          th Company
+          th Applied
+          th Answer
+          th.right Actions
+      tbody
         each job, index in jobs
-            tr
-                td= index
-                td= job.title
-                td= job.company.name
-                td 
-                    if(job.applied)
-                        button.success Yes
-                    if(!job.applied)
-                        button.danger No
-                td
-                    if(job.answer)
-                        button.success Yes
-                    if(!job.answer)
-                        button.danger No
-                td
-                    a.button.success(href="/detail/"+job._id ) View
-                    a.button.warning(href="/edit/"+job._id) Edit
-                    a.button.danger(href="/delete/"+job._id) Delete
-        if jobs.length==0
-            tr
-                td
-                td No Jobs yet
-                td
-                td
-                td 
-                td
+          tr
+            td #{index + 1}
+            td
+              a(href=`/detail/${job._id}`)= job.title
+              if job.location
+                div.muted= job.location
+            td= job.company && job.company.name ? job.company.name : '—'
+            td
+              if job.applied
+                span.badge.badge-ok Ja
+              else
+                span.badge.badge-no Nein
+            td
+              if job.answer
+                span.badge.badge-ok Ja
+              else
+                span.badge.badge-no Nein
+            td.right
+              .buttons
+                a.btn.secondary(href=`/detail/${job._id}`) View
+                a.btn.warn(href=`/edit/${job._id}`) Edit
+                a.btn.danger(href=`/delete/${job._id}`) Delete
+  else
+    .card.center.max-w-sm
+      h2 Noch keine Jobs
+      p.muted Lege deine erste Bewerbung an, um den Überblick zu behalten.
+      .buttons.center
+        a.btn(href="/new") Neue Bewerbung anlegen

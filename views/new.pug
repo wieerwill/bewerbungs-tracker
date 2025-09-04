@@ -1,43 +1,71 @@
 extends layout
+
 block content
-    header
-        h2 New Job
-    if msg
-        .message
-            small=msg
-        
-    .form
-        form(action="/new",method="POST")
-            h3 Company
-            label(for="name") Name
-            input#name(type="text", name="companyName")
-            label(for="website") Website
-            input#website(type="text", name="companyWebsite")
-            label(for="street") Street
-            input#street(type="text", name="companyStreet")
-            label(for="city") City
-            input#city(type="text", name="companyCity")
-            label(for="note") Notes
-            textarea#notes(name="companyNote", cols="30", rows="3")
+  .card
+    .card-header
+      h1 Neue Bewerbung
 
-            h3 Contact
-            label(for="name") Name
-            input#name(type="text", name="contactName")
-            label(for="email") Email
-            input#email(type="text", name="contactEmail")
-            label(for="phone") Phone
-            input#phone(type="text", name="contactPhone")
-            label(for="note") Notes
-            textarea#note(name="contactNote", cols="30", rows="3")
+  if msg
+    .card
+      p.muted= msg
 
-            h3 Job
-            label(for="title") Title
-            input#title(type="text", name="jobTitle")
-            label(for="description") Description
-            textarea#description(name="jobDescription", cols="30", rows="3")
-            label(for="note") Notes
-            textarea#note(name="jobNote", cols="30", rows="3")
+  .card
+    form(action="/new", method="POST")
+      // Company
+      fieldset.form-section
+        legend Abschnitt: Unternehmen
+        .row.row-2
+          .field
+            label(for="company-name") Name
+            input#company-name(type="text", name="companyName", placeholder="z. B. Corpuls", required)
+          .field
+            label(for="company-website") Website
+            input#company-website(type="url", name="companyWebsite", placeholder="https://…")
+          .field
+            label(for="company-street") Straße
+            input#company-street(type="text", name="companyStreet", placeholder="Musterstraße 1")
+          .field
+            label(for="company-city") Stadt
+            input#company-city(type="text", name="companyCity", placeholder="Augsburg")
+        .field
+          label(for="company-notes") Notizen
+          textarea#company-notes(name="companyNote", rows="3", placeholder="Besonderheiten, Kontakte, Karriereseite …")
 
-            button.success(type="submit") Save
-        a(href="/") 
-            button.warning Abort
+      // Contact
+      fieldset.form-section
+        legend Abschnitt: Kontaktperson
+        .row.row-3
+          .field
+            label(for="contact-name") Name
+            input#contact-name(type="text", name="contactName", placeholder="Vor- und Nachname")
+          .field
+            label(for="contact-email") E-Mail
+            input#contact-email(type="email", name="contactEmail", placeholder="name@example.com")
+          .field
+            label(for="contact-phone") Telefon
+            input#contact-phone(type="tel", name="contactPhone", placeholder="+49 …")
+        .field
+          label(for="contact-note") Notizen
+          textarea#contact-note(name="contactNote", rows="3", placeholder="Rolle, Verfügbarkeit, bevorzugter Kanal …")
+
+      // Job
+      fieldset.form-section
+        legend Abschnitt: Stelle
+        .row.row-2
+          .field
+            label(for="job-title") Titel
+            input#job-title(type="text", name="jobTitle", placeholder="z. B. Embedded Software Engineer", required)
+          .field
+            // optional: später auto-berechnet/aus URL geparst
+            label(for="job-source") Quelle (optional)
+            input#job-source(type="url", name="jobSource", placeholder="Link zur Ausschreibung")
+        .field
+          label(for="job-description") Beschreibung
+          textarea#job-description(name="jobDescription", rows="4", placeholder="Kurzbeschreibung oder relevante Punkte …")
+        .field
+          label(for="job-note") Notizen
+          textarea#job-note(name="jobNote", rows="3", placeholder="Eigenes Fazit, nächste Schritte, Reminder …")
+
+      .form-actions.buttons
+        button.btn(type="submit") Speichern
+        a.btn.secondary(href="/") Abbrechen

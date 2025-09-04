@@ -1,43 +1,120 @@
 extends layout
+
 block content
-    header
-        h2 Edit Job #{job.title}
-    if msg
-        .message
-            small=msg
-        
-    .form
-        form(action=`/edit/${job._id}`,method="POST")
-            h3 Company
-            label(for="name") Name
-            input#name(type="text", name="companyName" value=`${job.company.name}` )
-            label(for="website") Website
-            input#website(type="text", name="companyWebsite" value=`${job.company.website}`)
-            label(for="street") Street
-            input#street(type="text", name="companyStreet" value=`${job.company.street}`)
-            label(for="city") City
-            input#city(type="text", name="companyCity" value=`${job.company.city}`)
-            label(for="note") Notes
-            textarea#notes(name="companyNote", cols="30", rows="3")  #{job.company.note}
+  .card
+    .card-header
+      h1 Bewerbungsdaten bearbeiten
+      if job && job.title
+        p.muted #{job.title}
 
-            h3 Contact
-            label(for="name") Name
-            input#name(type="text", name="contactName" value=`${job.contact.name}`)
-            label(for="email") Email
-            input#email(type="text", name="contactEmail" value=`${job.contact.email}`)
-            label(for="phone") Phone
-            input#phone(type="text", name="contactPhone" value=`${job.contact.phone}`)
-            label(for="note") Notes
-            textarea#note(name="contactNote", cols="30", rows="3") #{job.contact.note}
+  if msg
+    .card
+      p.muted= msg
 
-            h3 Job
-            label(for="title") Title
-            input#title(type="text", name="jobTitle" value=`${job.title}`)
-            label(for="description") Description
-            textarea#description(name="jobDescription", cols="30", rows="3") #{job.description}
-            label(for="note") Notes
-            textarea#note(name="jobNote", cols="30", rows="3") #{job.note}
+  .card
+    form(action=`/edit/${job && job._id}`, method="POST")
+      /* Company */
+      fieldset.form-section
+        legend Abschnitt: Unternehmen
+        .row.row-2
+          .field
+            label(for="company-name") Name
+            input#company-name(
+              type="text"
+              name="companyName"
+              placeholder="z. B. Corpuls"
+              value=(job && job.company && job.company.name) || ''
+              required
+            )
+          .field
+            label(for="company-website") Website
+            input#company-website(
+              type="url"
+              name="companyWebsite"
+              placeholder="https://…"
+              value=(job && job.company && job.company.website) || ''
+            )
+          .field
+            label(for="company-street") Straße
+            input#company-street(
+              type="text"
+              name="companyStreet"
+              placeholder="Musterstraße 1"
+              value=(job && job.company && job.company.street) || ''
+            )
+          .field
+            label(for="company-city") Stadt
+            input#company-city(
+              type="text"
+              name="companyCity"
+              placeholder="Augsburg"
+              value=(job && job.company && job.company.city) || ''
+            )
+        .field
+          label(for="company-notes") Notizen
+          textarea#company-notes(name="companyNote", rows="3", placeholder="Besonderheiten, Karriereseite …")= (job && job.company && job.company.note) || ''
 
-            button.success(type="submit") Save
-        a(href="/") 
-            button.warning Abort
+      /* Contact */
+      fieldset.form-section
+        legend Abschnitt: Kontaktperson
+        .row.row-3
+          .field
+            label(for="contact-name") Name
+            input#contact-name(
+              type="text"
+              name="contactName"
+              placeholder="Vor- und Nachname"
+              value=(job && job.contact && job.contact.name) || ''
+            )
+          .field
+            label(for="contact-email") E-Mail
+            input#contact-email(
+              type="email"
+              name="contactEmail"
+              placeholder="name@example.com"
+              value=(job && job.contact && job.contact.email) || ''
+            )
+          .field
+            label(for="contact-phone") Telefon
+            input#contact-phone(
+              type="tel"
+              name="contactPhone"
+              placeholder="+49 …"
+              value=(job && job.contact && job.contact.phone) || ''
+            )
+        .field
+          label(for="contact-note") Notizen
+          textarea#contact-note(name="contactNote", rows="3", placeholder="Rolle, Verfügbarkeit …")= (job && job.contact && job.contact.note) || ''
+
+      /* Job */
+      fieldset.form-section
+        legend Abschnitt: Stelle
+        .row.row-2
+          .field
+            label(for="job-title") Titel
+            input#job-title(
+              type="text"
+              name="jobTitle"
+              placeholder="z. B. Embedded Software Engineer"
+              value=(job && job.title) || ''
+              required
+            )
+          .field
+            // optional: Quelle der Ausschreibung
+            label(for="job-source") Quelle (optional)
+            input#job-source(
+              type="url"
+              name="jobSource"
+              placeholder="Link zur Ausschreibung"
+              value=(job && job.source) || ''
+            )
+        .field
+          label(for="job-description") Beschreibung
+          textarea#job-description(name="jobDescription", rows="4", placeholder="Kurzbeschreibung oder relevante Punkte …")= (job && job.description) || ''
+        .field
+          label(for="job-note") Notizen
+          textarea#job-note(name="jobNote", rows="3", placeholder="Eigenes Fazit, nächste Schritte, Reminder …")= (job && job.note) || ''
+
+      .form-actions.buttons
+        button.btn(type="submit") Speichern
+        a.btn.secondary(href="/") Abbrechen
