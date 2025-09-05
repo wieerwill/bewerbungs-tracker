@@ -7,6 +7,8 @@ import {
   requestToCompany,
   requestToContact,
   requestToJob,
+  companiesToCsv,
+  formatJobForClipboard,
 } from './helpers';
 import { renderMarkdown } from './markdown';
 
@@ -120,6 +122,32 @@ export default function registerRoutes(app: Express, s: Statements) {
   app.get('/delete/:id', (req: Request, res: Response) => {
     s.deleteJob(String(req.params.id));
     res.redirect('/');
+  });
+
+  // API: einen Job als JSON oder Markdown für Clipboard
+  app.get('/api/jobs/:id', (req, res) => {
+    const id = String(req.params.id);
+    const joined = s.getJobJoinedById(id);
+    if (!joined) return res.status(404).json({ error: 'Not found' });
+
+    if (req.query.format === 'markdown') {
+      const text = formatJobForClipboard(joined);
+      res.type('text/plain').send(text);
+    } else {
+      res.json(joined);
+    }
+  });
+
+  // CSV export of all companies
+  app.get('/api/companies.csv', (_req, res) => {
+    const companies = s.listCompanies(); // typed Company[]
+    const csv = companiesToCsv(companies);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename="companies.csv"',
+    );
+    res.send(csv);
   });
 
   // Companies: index (→ getypter Wrapper)

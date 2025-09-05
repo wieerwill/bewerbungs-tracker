@@ -45,3 +45,26 @@ body
       p
         | made by 
         a(href="http://github.com/wieerwill" rel="noopener")  WieErWill
+
+script.
+  (function(){
+    async function copyJob(jobId, btn){
+      try{
+        const res = await fetch(`/api/jobs/${encodeURIComponent(jobId)}?format=markdown`);
+        if(!res.ok){ throw new Error('HTTP '+res.status); }
+        const text = await res.text();
+        await navigator.clipboard.writeText(text);
+        if(btn){ const old=btn.textContent; btn.textContent='Kopiert!'; btn.disabled=true; setTimeout(()=>{btn.textContent=old; btn.disabled=false;}, 1200); }
+      }catch(err){
+        alert('Kopieren fehlgeschlagen. Details in der Konsole.');
+        console.error('copyJob failed', err);
+      }
+    }
+    document.addEventListener('click', (e)=>{
+      const t = e.target;
+      if(t && t.classList && t.classList.contains('js-copy-job')){
+        const jobId = t.getAttribute('data-jobid');
+        if(jobId) copyJob(jobId, t);
+      }
+    });
+  })();

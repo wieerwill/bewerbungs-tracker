@@ -148,3 +148,102 @@ export function jobRowToVm(r: JobJoinedRow): JobViewModel {
     updated_at: r.updated_at,
   };
 }
+
+export function formatJobForClipboard(j: JobJoinedRow): string {
+  const lines: string[] = [];
+  const money = (
+    n?: number | null,
+    cur?: string | null,
+    per?: string | null,
+  ) =>
+    n != null
+      ? `${n.toLocaleString()} ${cur || 'EUR'} / ${per === 'month' ? 'Monat' : 'Jahr'}`
+      : '—';
+
+  lines.push(`# ${j.title}`);
+  if (j.description) {
+    lines.push('', '## Beschreibung', j.description);
+  }
+  if (j.note) {
+    lines.push('', '## Notizen', j.note);
+  }
+
+  lines.push('', '## Unternehmen');
+  lines.push(`- Name: ${j.company_name || '—'}`);
+  if (j.company_website) lines.push(`- Website: ${j.company_website}`);
+
+  lines.push('', '## Kontakt');
+  lines.push(`- Name: ${j.contact_name || '—'}`);
+  if (j.contact_email) lines.push(`- E-Mail: ${j.contact_email}`);
+  if (j.contact_phone) lines.push(`- Telefon: ${j.contact_phone}`);
+
+  lines.push('', '## Status');
+  lines.push(`- Angeschrieben: ${j.applied ? 'Ja' : 'Nein'}`);
+  lines.push(`- Antwort: ${j.answer ? 'Ja' : 'Nein'}`);
+
+  lines.push('', '## Rahmen & Vergütung');
+  lines.push(
+    `- Spanne: ${money((j as any).salary_min, (j as any).salary_currency, (j as any).salary_period)} – ${money((j as any).salary_max, (j as any).salary_currency, (j as any).salary_period)}`,
+  );
+  lines.push(
+    `- Ziel: ${money((j as any).salary_target, (j as any).salary_currency, (j as any).salary_period)}`,
+  );
+  if ((j as any).work_mode)
+    lines.push(
+      `- Arbeitsmodus: ${(j as any).work_mode}${(j as any).remote_ratio ? ` (${(j as any).remote_ratio}% Remote)` : ''}`,
+    );
+  if ((j as any).seniority) lines.push(`- Seniorität: ${(j as any).seniority}`);
+  if ((j as any).employment_type)
+    lines.push(`- Anstellung: ${(j as any).employment_type}`);
+  if ((j as any).contract_type)
+    lines.push(`- Vertrag: ${(j as any).contract_type}`);
+  if ((j as any).start_date) lines.push(`- Start: ${(j as any).start_date}`);
+  if ((j as any).deadline_date)
+    lines.push(`- Frist: ${(j as any).deadline_date}`);
+  if ((j as any).application_channel)
+    lines.push(`- Kanal: ${(j as any).application_channel}`);
+  if ((j as any).source_url)
+    lines.push(`- Ausschreibung: ${(j as any).source_url}`);
+  if ((j as any).referral != null)
+    lines.push(`- Referral: ${(j as any).referral ? 'Ja' : 'Nein'}`);
+
+  lines.push('', `ID: ${j.id}`);
+  return lines.join('\n');
+}
+
+// RFC4180-ish CSV with UTF-8 BOM (Excel-friendly)
+function csvEscape(val: unknown): string {
+  const s = (val ?? '').toString();
+  if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+export function companiesToCsv(rows: Company[]): string {
+  const header = [
+    'name',
+    'website',
+    'city',
+    'linkedin_url',
+    'glassdoor_url',
+    'stepstone_url',
+    'size_range',
+  ];
+  const lines = [header.join(',')];
+
+  for (const r of rows) {
+    lines.push(
+      [
+        csvEscape(r.name),
+        csvEscape(r.website),
+        csvEscape(r.city),
+        csvEscape(r.linkedin_url),
+        csvEscape(r.glassdoor_url),
+        csvEscape(r.stepstone_url),
+        csvEscape(r.size_range),
+      ].join(','),
+    );
+  }
+
+  // Prepend BOM for Excel
+  return '\uFEFF' + lines.join('\r\n');
+}

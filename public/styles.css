@@ -494,3 +494,5 @@ select[required] {
 .prose.sm {
   font-size: 0.95em;
 }
+
+.btn[disabled]{ opacity:.6; cursor:not-allowed; }

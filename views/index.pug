@@ -68,6 +68,7 @@ block content
                 a.btn.secondary(href=`/detail/${job._id}`) View
                 a.btn.warn(href=`/edit/${job._id}`) Edit
                 a.btn.danger(href=`/delete/${job._id}`) Delete
+                button.btn.secondary.js-copy-job(type="button", data-jobid=job._id) Kopieren
   else
     .card.center.max-w-sm
       h2 Noch keine Jobs

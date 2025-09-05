@@ -5,6 +5,7 @@ block content
     .card-header
       h1 Unternehmen
       .buttons
+        a.btn.secondary(href="/api/companies.csv") CSV Export
         a.btn(href="/companies/new") + Neues Unternehmen
 
   if companies && companies.length

@@ -7,6 +7,7 @@ block content
       h1= job && job.title ? job.title : 'Bewerbung'
       .buttons
         if job && job._id
+          button.btn.secondary.js-copy-job(type="button", data-jobid=job && job._id) Kopieren
           a.btn.secondary(href="/") Übersicht
           a.btn.warn(href=`/edit/${job._id}`) Bearbeiten
           a.btn.danger(href=`/delete/${job._id}`) Löschen
