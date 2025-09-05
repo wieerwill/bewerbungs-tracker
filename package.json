@@ -2,11 +2,15 @@
   "name": "applicationapp",
   "version": "1.0.0",
   "description": "create your personal view of applications for jobs",
-  "main": "index.js",
+  "main": "dist/index.ts",
+  "type": "commonjs",
   "scripts": {
-    "dev": "NODE_ENV=development nodemon index.js",
-    "start": "NODE_ENV=production node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "NODE_ENV=development tsx watch src/index.ts",
+    "start": "NODE_ENV=production tsx watch src/index.ts",
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "lint": "eslint \"{src,libs,test}/**/*.ts\" --fix"
   },
   "author": "",
   "license": "ISC",
@@ -19,6 +23,21 @@
     "uuid": "11.1.0"
   },
   "devDependencies": {
-    "nodemon": "3.1.10"
+    "@types/express": "^5.0.3",
+    "@types/morgan": "^1.9.10",
+    "@types/node": "24.3.1",
+    "@types/pug": "^2.0.10",
+    "@typescript-eslint/eslint-plugin": "8.42.0",
+    "@typescript-eslint/parser": "8.42.0",
+    "eslint": "9.34.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-prettier": "5.5.4",
+    "nodemon": "3.1.10",
+    "prettier": "3.6.2",
+    "ts-loader": "9.5.4",
+    "ts-node": "10.9.2",
+    "tsconfig-paths": "4.2.0",
+    "tsx": "^4.20.5",
+    "typescript": "5.9.2"
   }
 }

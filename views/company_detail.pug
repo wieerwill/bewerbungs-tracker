@@ -1,0 +1,58 @@
+extends layout
+
+block content
+  .card
+    .card-header
+      h1= company.name
+      .buttons
+        a.btn.secondary(href="/companies") Zur Übersicht
+
+  .row.row-2
+    .card
+      h2 Unternehmensdaten
+      .meta-grid
+        if company.website
+          .meta-item
+            span.meta-label Website
+            span.meta-value
+              - const u = company.website.startsWith('http') ? company.website : `https://${company.website}`;
+              a(href=u rel="noopener")= company.website
+        if company.street
+          .meta-item
+            span.meta-label Straße
+            span.meta-value= company.street
+        if company.city
+          .meta-item
+            span.meta-label Stadt
+            span.meta-value= company.city
+      if company.note
+        h3 Notizen
+        p!= company.note
+
+    .card
+      h2 Kontakte
+      if contacts && contacts.length
+        table.table
+          thead
+            tr
+              th Name
+              th E-Mail
+              th Telefon
+              th Notiz
+          tbody
+            each ct in contacts
+              tr
+                td= ct.name || '—'
+                td
+                  if ct.email
+                    a(href=`mailto:${ct.email}`)= ct.email
+                  else
+                    | —
+                td
+                  if ct.phone
+                    a(href=`tel:${ct.phone}`)= ct.phone
+                  else
+                    | —
+                td= ct.note || '—'
+      else
+        p.muted Noch keine Kontakte
