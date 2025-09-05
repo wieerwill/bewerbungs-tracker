@@ -33,10 +33,62 @@ block content
     .card
       if job.description
         h2 Beschreibung
-        p!= job.description
+        .prose!= renderMarkdown(job.description)
       if job.note
         h2 Notizen
-        p!= job.note
+        .prose!= renderMarkdown(job.note)
+
+    .card
+      h2 Rahmen & Vergütung
+      .meta-grid
+        if job.salary_min || job.salary_max
+          .meta-item
+            span.meta-label Gehaltsspanne
+            span.meta-value
+              | #{job.salary_min ? job.salary_min.toLocaleString() : '—'} – #{job.salary_max ? job.salary_max.toLocaleString() : '—'} #{job.salary_currency || 'EUR'} / #{job.salary_period==='month' ? 'Monat' : 'Jahr'}
+        if job.salary_target
+          .meta-item
+            span.meta-label Zielgehalt
+            span.meta-value #{job.salary_target.toLocaleString()} #{job.salary_currency || 'EUR'} / #{job.salary_period==='month' ? 'Monat' : 'Jahr'}
+        if job.work_mode
+          .meta-item
+            span.meta-label Arbeitsmodus
+            span.meta-value #{job.work_mode}#{job.remote_ratio ? ` (${job.remote_ratio}% Remote)` : ''}
+        if job.seniority
+          .meta-item
+            span.meta-label Seniorität
+            span.meta-value= job.seniority
+        if job.employment_type
+          .meta-item
+            span.meta-label Anstellungsart
+            span.meta-value= job.employment_type
+        if job.contract_type
+          .meta-item
+            span.meta-label Vertrag
+            span.meta-value= job.contract_type
+        if job.start_date
+          .meta-item
+            span.meta-label Startdatum
+            span.meta-value= job.start_date
+        if job.deadline_date
+          .meta-item
+            span.meta-label Bewerbungsfrist
+            span.meta-value= job.deadline_date
+        if job.application_channel
+          .meta-item
+            span.meta-label Kanal
+            span.meta-value= job.application_channel
+        if job.source_url
+          .meta-item
+            span.meta-label Ausschreibung
+            span.meta-value: a(href=job.source_url rel="noopener") Link
+        .meta-item
+          span.meta-label Referral
+          span.meta-value
+            if job.referral
+              span.badge.badge-ok Ja
+            else
+              span.badge.badge-no Nein
 
   // Zwei Spalten: Unternehmen & Kontakt
   .row.row-2

@@ -1,20 +1,22 @@
-"use strict";
+import path from 'path';
+import fs from 'fs';
+import Database from 'better-sqlite3';
 
-const path = require("path");
-const fs = require("fs");
-const BetterSqlite3 = require("better-sqlite3");
+interface DatabaseOptions {
+  baseDir: string;
+}
 
-function createDatabase({ baseDir }) {
-  const databaseDirectory = path.join(baseDir, "database");
-  const databaseFile = path.join(databaseDirectory, "jobs.db");
-  if (!fs.existsSync(databaseDirectory)) fs.mkdirSync(databaseDirectory, { recursive: true });
+export default function createDatabase({ baseDir }: DatabaseOptions) {
+  const databaseDirectory = path.join(baseDir, 'database');
+  const databaseFile = path.join(databaseDirectory, 'jobs.db');
+  if (!fs.existsSync(databaseDirectory))
+    fs.mkdirSync(databaseDirectory, { recursive: true });
 
-  const sqlite = new BetterSqlite3(databaseFile);
-  sqlite.pragma("journal_mode = WAL");
-  sqlite.pragma("foreign_keys = ON");
+  const db = new Database(databaseFile);
+  db.pragma('journal_mode = WAL');
+  db.pragma('foreign_keys = ON');
 
-  /* Schema (normalisiert) */
-  sqlite.exec(`
+  db.exec(`
     CREATE TABLE IF NOT EXISTS companies (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL UNIQUE COLLATE NOCASE,
@@ -22,12 +24,21 @@ function createDatabase({ baseDir }) {
       street TEXT,
       city TEXT,
       note TEXT,
+      linkedin_url TEXT,
+      glassdoor_url TEXT,
+      stepstone_url TEXT,
+      other_links_json TEXT, -- JSON Array [{label,url}]
+      industry TEXT,
+      size_range TEXT,
+      hiring_page TEXT,
+      career_email TEXT,
+      phone TEXT,
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now'))
     );
   `);
 
-  sqlite.exec(`
+  db.exec(`
     CREATE TABLE IF NOT EXISTS contacts (
       id TEXT PRIMARY KEY,
       company_id TEXT NOT NULL,
@@ -41,7 +52,7 @@ function createDatabase({ baseDir }) {
     );
   `);
 
-  sqlite.exec(`
+  db.exec(`
     CREATE TABLE IF NOT EXISTS jobs (
       id TEXT PRIMARY KEY,
       title TEXT NOT NULL,
@@ -51,6 +62,21 @@ function createDatabase({ baseDir }) {
       answer INTEGER DEFAULT 0,
       company_id TEXT,
       contact_id TEXT,
+      salary_min REAL,
+      salary_max REAL,
+      salary_target REAL,
+      salary_currency TEXT,
+      salary_period TEXT, 
+      work_mode TEXT, 
+      remote_ratio INTEGER,
+      seniority TEXT, 
+      employment_type TEXT, 
+      contract_type TEXT, 
+      start_date TEXT,
+      deadline_date TEXT,
+      source_url TEXT,
+      application_channel TEXT,
+      referral INTEGER DEFAULT 0,
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY(company_id) REFERENCES companies(id) ON DELETE SET NULL,
@@ -58,7 +84,7 @@ function createDatabase({ baseDir }) {
     );
   `);
 
-  return sqlite;
+  return db;
 }
 
-module.exports = createDatabase;
+export type SqliteDatabase = ReturnType<typeof createDatabase>;

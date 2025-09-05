@@ -26,6 +26,37 @@ block content
           .field
             label(for="company-city") Stadt
             input#company-city(type="text", name="companyCity")
+        .row.row-2
+          .field
+            label(for="company-linkedin") LinkedIn
+            input#company-linkedin(type="url", name="companyLinkedIn", placeholder="https://www.linkedin.com/company/…")
+          .field
+            label(for="company-glassdoor") Glassdoor
+            input#company-glassdoor(type="url", name="companyGlassdoor", placeholder="https://www.glassdoor.de/…")
+        .row.row-2
+          .field
+            label(for="company-stepstone") StepStone
+            input#company-stepstone(type="url", name="companyStepstone", placeholder="https://www.stepstone.de/…")
+          .field
+            label(for="company-hiringpage") Hiring-Page
+            input#company-hiringpage(type="url", name="companyHiringPage", placeholder="https://…/jobs")
+        .row.row-2
+          .field
+            label(for="company-industry") Branche
+            input#company-industry(type="text", name="companyIndustry", placeholder="z. B. Medizintechnik")
+          .field
+            label(for="company-size") Größe
+            input#company-size(type="text", name="companySizeRange", placeholder="z. B. 200–500")
+        .row.row-2
+          .field
+            label(for="company-career-email") Karriere-E-Mail
+            input#company-career-email(type="email", name="companyCareerEmail")
+          .field
+            label(for="company-phone") Telefon
+            input#company-phone(type="tel", name="companyPhone")
+        .field
+          label(for="company-otherlinks") Weitere Links (JSON)
+          textarea#company-otherlinks(name="companyOtherLinksJson", rows="3" placeholder='z. B. [{"label":"Kununu","url":"https://…"}]')
         .field
           label(for="company-note") Notizen
           textarea#company-note(name="companyNote", rows="3")

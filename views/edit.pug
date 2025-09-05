@@ -13,80 +13,7 @@ block content
 
   .card
     form(action=`/edit/${job && job._id}`, method="POST")
-      /* Company */
-      fieldset.form-section
-        legend Abschnitt: Unternehmen
-        .row.row-2
-          .field
-            label(for="company-name") Name
-            input#company-name(
-              type="text"
-              name="companyName"
-              placeholder="z. B. Corpuls"
-              value=(job && job.company && job.company.name) || ''
-              required
-            )
-          .field
-            label(for="company-website") Website
-            input#company-website(
-              type="url"
-              name="companyWebsite"
-              placeholder="https://…"
-              value=(job && job.company && job.company.website) || ''
-            )
-          .field
-            label(for="company-street") Straße
-            input#company-street(
-              type="text"
-              name="companyStreet"
-              placeholder="Musterstraße 1"
-              value=(job && job.company && job.company.street) || ''
-            )
-          .field
-            label(for="company-city") Stadt
-            input#company-city(
-              type="text"
-              name="companyCity"
-              placeholder="Augsburg"
-              value=(job && job.company && job.company.city) || ''
-            )
-        .field
-          label(for="company-notes") Notizen
-          textarea#company-notes(name="companyNote", rows="3", placeholder="Besonderheiten, Karriereseite …")= (job && job.company && job.company.note) || ''
-
-      /* Contact */
-      fieldset.form-section
-        legend Abschnitt: Kontaktperson
-        .row.row-3
-          .field
-            label(for="contact-name") Name
-            input#contact-name(
-              type="text"
-              name="contactName"
-              placeholder="Vor- und Nachname"
-              value=(job && job.contact && job.contact.name) || ''
-            )
-          .field
-            label(for="contact-email") E-Mail
-            input#contact-email(
-              type="email"
-              name="contactEmail"
-              placeholder="name@example.com"
-              value=(job && job.contact && job.contact.email) || ''
-            )
-          .field
-            label(for="contact-phone") Telefon
-            input#contact-phone(
-              type="tel"
-              name="contactPhone"
-              placeholder="+49 …"
-              value=(job && job.contact && job.contact.phone) || ''
-            )
-        .field
-          label(for="contact-note") Notizen
-          textarea#contact-note(name="contactNote", rows="3", placeholder="Rolle, Verfügbarkeit …")= (job && job.contact && job.contact.note) || ''
-
-      /* Job */
+      // Stelle
       fieldset.form-section
         legend Abschnitt: Stelle
         .row.row-2
@@ -100,21 +27,84 @@ block content
               required
             )
           .field
-            // optional: Quelle der Ausschreibung
             label(for="job-source") Quelle (optional)
-            input#job-source(
-              type="url"
-              name="jobSource"
-              placeholder="Link zur Ausschreibung"
-              value=(job && job.source) || ''
-            )
+            input#job-source(type="url", name="jobSource", placeholder="Link zur Ausschreibung", value=(job && job.source) || '')
         .field
           label(for="job-description") Beschreibung
           textarea#job-description(name="jobDescription", rows="4", placeholder="Kurzbeschreibung oder relevante Punkte …")= (job && job.description) || ''
         .field
           label(for="job-note") Notizen
           textarea#job-note(name="jobNote", rows="3", placeholder="Eigenes Fazit, nächste Schritte, Reminder …")= (job && job.note) || ''
+        input#salaryMin(type="number" step="100" name="salaryMin" value=job.salary_min || '')
+        select#salaryPeriod(name="salaryPeriod")
+          option(value="year" selected=(job.salary_period==='year')) pro Jahr
+          option(value="month" selected=(job.salary_period==='month')) pro Monat
+        // usw. für alle select/checkbox Felder
+        input(type="checkbox" name="referral" checked=job.referral ? true : false)
+
+      // Zuordnung: Unternehmen & Kontakt
+      fieldset.form-section
+        legend Abschnitt: Zuordnung
+        .row.row-2
+          .field
+            label(for="companyId") Unternehmen
+            select#companyId(name="companyId", required)
+              option(value="" disabled hidden selected=!(job && job.company_id)) — Unternehmen wählen —
+              each c in companies
+                option(value=c.id selected=(job && job.company_id === c.id))= c.name
+            .help Unternehmen kann hier nicht neu angelegt werden – bitte unter „Unternehmen“.
+          .field
+            label(for="contactId") Kontaktperson (optional)
+            //- initial leer; wird durch Script befüllt & auf bestehende Auswahl gesetzt
+            select#contactId(name="contactId")
+              option(value="" selected)= '— Kein Kontakt —'
+            .help Wird nach Unternehmenswahl befüllt.
 
       .form-actions.buttons
         button.btn(type="submit") Speichern
-        a.btn.secondary(href="/") Abbrechen
+        a.btn.secondary(href=`/detail/${job && job._id}`) Abbrechen
+
+  // Client-Logik: Kontakte für gewählte Company rendern und bestehende Auswahl setzen
+  script.
+    (function(){
+      const contactsByCompany = !{JSON.stringify(contactsByCompany || {})};
+      const companySel = document.getElementById('companyId');
+      const contactSel = document.getElementById('contactId');
+      const selectedCompanyId = !{JSON.stringify(job && job.company_id || null)};
+      const selectedContactId = !{JSON.stringify(job && job.contact_id || null)};
+
+      function renderContacts(companyId){
+        while(contactSel.firstChild) contactSel.removeChild(contactSel.firstChild);
+        const optNone = document.createElement('option');
+        optNone.value = '';
+        optNone.textContent = '— Kein Kontakt —';
+        contactSel.appendChild(optNone);
+
+        const list = (companyId && contactsByCompany[companyId]) ? contactsByCompany[companyId] : [];
+        for(const ct of list){
+          const o = document.createElement('option');
+          o.value = ct.id;
+          o.textContent = ct.name || (ct.email || ct.phone || 'Kontakt ohne Namen');
+          contactSel.appendChild(o);
+        }
+        // Falls bereits ein Kontakt gesetzt war, vorauswählen
+        if (selectedContactId && companyId && list.some((ct)=>ct.id===selectedContactId)) {
+          contactSel.value = selectedContactId;
+        } else {
+          contactSel.value = '';
+        }
+      }
+
+      // Initial: wenn Company gewählt ist, Kontakte rendern
+      if (companySel && companySel.value) {
+        renderContacts(companySel.value);
+      } else if (selectedCompanyId) {
+        companySel.value = selectedCompanyId;
+        renderContacts(selectedCompanyId);
+      }
+
+      // On change: Kontakte neu rendern und Auswahl zurücksetzen
+      companySel && companySel.addEventListener('change', (e)=>{
+        renderContacts(e.target.value);
+      });
+    })();

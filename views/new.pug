@@ -11,44 +11,7 @@ block content
 
   .card
     form(action="/new", method="POST")
-      // Company
-      fieldset.form-section
-        legend Abschnitt: Unternehmen
-        .row.row-2
-          .field
-            label(for="company-name") Name
-            input#company-name(type="text", name="companyName", placeholder="z. B. Corpuls", required)
-          .field
-            label(for="company-website") Website
-            input#company-website(type="url", name="companyWebsite", placeholder="https://…")
-          .field
-            label(for="company-street") Straße
-            input#company-street(type="text", name="companyStreet", placeholder="Musterstraße 1")
-          .field
-            label(for="company-city") Stadt
-            input#company-city(type="text", name="companyCity", placeholder="Augsburg")
-        .field
-          label(for="company-notes") Notizen
-          textarea#company-notes(name="companyNote", rows="3", placeholder="Besonderheiten, Kontakte, Karriereseite …")
-
-      // Contact
-      fieldset.form-section
-        legend Abschnitt: Kontaktperson
-        .row.row-3
-          .field
-            label(for="contact-name") Name
-            input#contact-name(type="text", name="contactName", placeholder="Vor- und Nachname")
-          .field
-            label(for="contact-email") E-Mail
-            input#contact-email(type="email", name="contactEmail", placeholder="name@example.com")
-          .field
-            label(for="contact-phone") Telefon
-            input#contact-phone(type="tel", name="contactPhone", placeholder="+49 …")
-        .field
-          label(for="contact-note") Notizen
-          textarea#contact-note(name="contactNote", rows="3", placeholder="Rolle, Verfügbarkeit, bevorzugter Kanal …")
-
-      // Job
+      // Stelle
       fieldset.form-section
         legend Abschnitt: Stelle
         .row.row-2
@@ -56,7 +19,6 @@ block content
             label(for="job-title") Titel
             input#job-title(type="text", name="jobTitle", placeholder="z. B. Embedded Software Engineer", required)
           .field
-            // optional: später auto-berechnet/aus URL geparst
             label(for="job-source") Quelle (optional)
             input#job-source(type="url", name="jobSource", placeholder="Link zur Ausschreibung")
         .field
@@ -65,7 +27,126 @@ block content
         .field
           label(for="job-note") Notizen
           textarea#job-note(name="jobNote", rows="3", placeholder="Eigenes Fazit, nächste Schritte, Reminder …")
+    
+        fieldset.form-section
+          legend Abschnitt: Vergütung & Rahmen
+          .row.row-3
+            .field
+              label(for="salaryMin") Gehalt von
+              input#salaryMin(type="number" step="100" name="salaryMin" placeholder="z. B. 60000")
+            .field
+              label(for="salaryMax") Gehalt bis
+              input#salaryMax(type="number" step="100" name="salaryMax" placeholder="z. B. 75000")
+            .field
+              label(for="salaryTarget") Zielgehalt
+              input#salaryTarget(type="number" step="100" name="salaryTarget" placeholder="z. B. 70000")
+          .row.row-3
+            .field
+              label(for="salaryCurrency") Währung
+              input#salaryCurrency(type="text" name="salaryCurrency" value="EUR")
+            .field
+              label(for="salaryPeriod") Zeitraum
+              select#salaryPeriod(name="salaryPeriod")
+                option(value="year" selected) pro Jahr
+                option(value="month") pro Monat
+            .field
+              label(for="applicationChannel") Bewerbungs-Kanal
+              input#applicationChannel(type="text" name="applicationChannel" placeholder="LinkedIn, StepStone, …")
+          .row.row-3
+            .field
+              label(for="workMode") Arbeitsmodus
+              select#workMode(name="workMode")
+                option(value="onsite") Vor Ort
+                option(value="hybrid" selected) Hybrid
+                option(value="remote") Remote
+            .field
+              label(for="remoteRatio") Remote-Anteil (%)
+              input#remoteRatio(type="number" min="0" max="100" step="5" name="remoteRatio")
+            .field
+              label(for="seniority") Senioritätsstufe
+              select#seniority(name="seniority")
+                option(value="intern") Praktikum
+                option(value="junior") Junior
+                option(value="mid" selected) Mid
+                option(value="senior") Senior
+                option(value="lead") Lead
+          .row.row-3
+            .field
+              label(for="employmentType") Anstellungsart
+              select#employmentType(name="employmentType")
+                option(value="full-time" selected) Vollzeit
+                option(value="part-time") Teilzeit
+            .field
+              label(for="contractType") Vertrag
+              select#contractType(name="contractType")
+                option(value="permanent" selected) Unbefristet
+                option(value="fixed-term") Befristet
+                option(value="freelance") Freelance
+            .field
+              label(for="referral")
+              .buttons
+                label
+                  input(type="checkbox" name="referral")
+                  |  Referral / Empfehlung
+          .row.row-2
+            .field
+              label(for="startDate") Startdatum (geplant)
+              input#startDate(type="date" name="startDate")
+            .field
+              label(for="deadlineDate") Bewerbungsfrist
+              input#deadlineDate(type="date" name="deadlineDate")
+          .field
+            label(for="job-source") Quell-URL (Ausschreibung)
+            input#job-source(type="url" name="jobSource" placeholder="https://…")
+
+
+
+      // Zuordnung: Unternehmen & Kontakt
+      fieldset.form-section
+        legend Abschnitt: Zuordnung
+        .row.row-2
+          .field
+            label(for="companyId") Unternehmen
+            select#companyId(name="companyId", required)
+              option(value="" disabled selected hidden) — Unternehmen wählen —
+              each c in companies
+                option(value=c.id)= c.name
+            .help Wähle ein bereits erfasstes Unternehmen.
+          .field
+            label(for="contactId") Kontaktperson (optional)
+            select#contactId(name="contactId")
+              option(value="" selected) — Kein Kontakt —
+            .help Wird nach Unternehmenswahl befüllt.
 
       .form-actions.buttons
         button.btn(type="submit") Speichern
         a.btn.secondary(href="/") Abbrechen
+
+  // Client-Logik: Kontakte nach Unternehmenswahl laden
+  // Wir bekommen aus der Route ein Mapping { [companyId]: Contact[] }
+  script.
+    (function(){
+      const contactsByCompany = !{JSON.stringify(contactsByCompany || {})};
+      const companySel = document.getElementById('companyId');
+      const contactSel = document.getElementById('contactId');
+
+      function renderContacts(companyId){
+        while(contactSel.firstChild) contactSel.removeChild(contactSel.firstChild);
+        const optNone = document.createElement('option');
+        optNone.value = '';
+        optNone.textContent = '— Kein Kontakt —';
+        contactSel.appendChild(optNone);
+
+        const list = contactsByCompany[companyId] || [];
+        for(const ct of list){
+          const o = document.createElement('option');
+          o.value = ct.id;
+          o.textContent = ct.name || (ct.email || ct.phone || 'Kontakt ohne Namen');
+          contactSel.appendChild(o);
+        }
+      }
+
+      companySel && companySel.addEventListener('change', (e)=>{
+        renderContacts(e.target.value);
+      });
+    })();

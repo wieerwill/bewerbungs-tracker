@@ -1,130 +1,174 @@
-"use strict";
+import type { Express, Request, Response } from 'express';
+import type { Statements } from './statements';
+import {
+  companyRowToVm,
+  contactRowToVm,
+  jobRowToVm,
+  requestToCompany,
+  requestToContact,
+  requestToJob,
+} from './helpers';
+import { renderMarkdown } from './markdown';
 
-/**
- * Registriert alle Routen. Hält die Logik schlank und ruft nur Statements/Helper auf.
- */
-function registerRoutes(app, s, h) {
-  /* Home: Jobs Liste */
-  app.get("/", (req, res) => {
-    const query = typeof req.query.q === "string" ? req.query.q : "";
-    const status = typeof req.query.status === "string" ? req.query.status : "";
-    const sort = typeof req.query.sort === "string" ? req.query.sort : "";
-    const msg = typeof req.query.msg === "string" ? req.query.msg : null;
+export default function registerRoutes(app: Express, s: Statements) {
+  // Jobs: list
+  app.get('/', (req: Request, res: Response) => {
+    const q = typeof req.query.q === 'string' ? req.query.q : '';
+    const status =
+      typeof req.query.status === 'string' ? (req.query.status as any) : '';
+    const sort =
+      typeof req.query.sort === 'string' ? (req.query.sort as any) : '';
+    const msg = typeof req.query.msg === 'string' ? req.query.msg : null;
 
-    const rows = s.listJobs({ query, status, sort });
-    const jobs = rows.map(h.jobRowToVm);
-    res.render("index", { jobs, msg, q: query, status, sort });
+    const rows = s.listJobs({ query: q, status, sort });
+    const jobs = rows.map(jobRowToVm);
+    res.render('index', { jobs, msg, q, status, sort });
   });
 
-  /* Jobs: New + Create */
-  app.get("/new", (req, res) => {
-    const msg = typeof req.query.msg === "string" ? req.query.msg : null;
-    res.render("new", { msg });
+  // Jobs: new (Form) – mit Company/Kontakt-Auswahl
+  app.get('/new', (_req, res) => {
+    const msg = null;
+    const companies = s.listCompanies(); // Company[]
+    // Kontakte je Unternehmen laden
+    const contactsByCompany = Object.fromEntries(
+      companies.map((c) => [c.id, s.listContactsForCompany(c.id)]),
+    );
+    res.render('new', { msg, companies, contactsByCompany });
   });
 
-  app.post("/new", (req, res) => {
-    const record = h.requestToJob(req.body);
-    if (!record.title) return res.redirect("/new?msg=" + encodeURIComponent("Titel ist erforderlich"));
-    s.insertJob.run(record);
+  // Jobs: new/create
+  app.post('/new', (req: Request, res: Response) => {
+    const record = requestToJob(req.body);
+    if (!record.title)
+      return res.redirect(
+        '/new?msg=' + encodeURIComponent('Titel ist erforderlich'),
+      );
+    s.insertJob(record);
     res.redirect(`/detail/${record.id}`);
   });
 
-  /* Jobs: Detail */
-  app.get("/detail/:id", (req, res) => {
-    const row = s.getJobById.get(String(req.params.id));
-    if (!row) return res.redirect("/?msg=" + encodeURIComponent("Kein Job zu dieser ID gefunden"));
-    // Für Detail nochmal mit Join laden, um Namen anzuzeigen:
-    const joined = s.listJobs({ query: "", status: "", sort: "" }).find(r => r.id === row.id) || row;
-    const job = h.jobRowToVm(joined);
-    const msg = typeof req.query.msg === "string" ? req.query.msg : null;
-    res.render("detail", { job, msg });
-  });
-
-  /* Jobs: Edit Form + Update */
-  app.get("/edit/:id", (req, res) => {
-    const row = s.getJobById.get(String(req.params.id));
-    if (!row) return res.redirect("/?msg=" + encodeURIComponent("Kein Job zu dieser ID gefunden"));
-    // für das Formular reicht die rohe Zeile
-    const job = h.jobRowToVm({ ...row, company_name: "", company_website: "", company_city: "", contact_name: "", contact_email: "", contact_phone: "" });
-    const msg = typeof req.query.msg === "string" ? req.query.msg : null;
-    res.render("edit", { job, msg });
-  });
-
-  app.post("/edit/:id", (req, res) => {
-    const row = s.getJobById.get(String(req.params.id));
-    if (!row) return res.redirect("/?msg=" + encodeURIComponent("Kein Job zu dieser ID gefunden"));
-    const currentVm = h.jobRowToVm({ ...row });
-    const record = h.requestToJob(req.body, currentVm); // behält applied/answer
-    s.updateJob.run(record);
-    res.redirect(`/detail/${record.id}`);
-  });
-
-  /* Jobs: Toggle Flags (einfach gelassen) */
-  app.get("/toggle/:id/:field", (req, res) => {
+  // Jobs: detail (→ nutzt getJobJoinedById statt list().find())
+  app.get('/detail/:id', (req: Request, res: Response) => {
     const id = String(req.params.id);
-    const field = String(req.params.field);
-    const row = s.getJobById.get(id);
-    if (!row) return res.redirect("/?msg=" + encodeURIComponent("Kein Job zu dieser ID gefunden"));
+    const joined = s.getJobJoinedById(id);
+    if (!joined)
+      return res.redirect(
+        '/?msg=' + encodeURIComponent('Kein Job zu dieser ID gefunden'),
+      );
+    const job = jobRowToVm(joined);
+    const msg = typeof req.query.msg === 'string' ? req.query.msg : null;
+    res.render('detail', { job, msg, renderMarkdown });
+  });
 
-    const vm = h.jobRowToVm(row);
-    if (field === "applied") vm.applied = !vm.applied;
-    else if (field === "answer") vm.answer = !vm.answer;
-    else return res.redirect(`/detail/${id}?msg=` + encodeURIComponent("Unbekanntes Feld"));
+  // Jobs: edit form (mit Company/Kontakt-Auswahl)
+  app.get('/edit/:id', (req, res) => {
+    const row = s.getJobById(String(req.params.id));
+    if (!row)
+      return res.redirect(
+        '/?msg=' + encodeURIComponent('Kein Job zu dieser ID gefunden'),
+      );
 
-    const updated = h.requestToJob({}, vm);
-    s.updateJob.run(updated);
+    // ViewModel für das Formular
+    const job = jobRowToVm({ ...(row as any) });
+
+    // Alle Companies + deren Kontakte laden
+    const companies = s.listCompanies();
+    const contactsByCompany = Object.fromEntries(
+      companies.map((c) => [c.id, s.listContactsForCompany(c.id)]),
+    );
+
+    const msg = typeof req.query.msg === 'string' ? req.query.msg : null;
+    res.render('edit', { job, msg, companies, contactsByCompany });
+  });
+
+  // Jobs: update
+  app.post('/edit/:id', (req: Request, res: Response) => {
+    const row = s.getJobById(String(req.params.id));
+    if (!row)
+      return res.redirect(
+        '/?msg=' + encodeURIComponent('Kein Job zu dieser ID gefunden'),
+      );
+    const currentVm = jobRowToVm({ ...(row as any) });
+    const record = requestToJob(req.body, currentVm);
+    s.updateJob(record);
+    res.redirect(`/detail/${record.id}`);
+  });
+
+  // Jobs: toggle
+  app.get('/toggle/:id/:field', (req: Request, res: Response) => {
+    const id = String(req.params.id);
+    const row = s.getJobById(id);
+    if (!row)
+      return res.redirect(
+        '/?msg=' + encodeURIComponent('Kein Job zu dieser ID gefunden'),
+      );
+
+    const vm = jobRowToVm({ ...(row as any) });
+    if (req.params.field === 'applied') vm.applied = !vm.applied;
+    else if (req.params.field === 'answer') vm.answer = !vm.answer;
+    else
+      return res.redirect(
+        `/detail/${id}?msg=` + encodeURIComponent('Unbekanntes Feld'),
+      );
+
+    const updated = requestToJob({}, vm);
+    s.updateJob(updated);
     res.redirect(`/detail/${id}`);
   });
 
-  /* Jobs: Delete */
-  app.get("/delete/:id", (req, res) => {
-    s.deleteJobById.run(String(req.params.id));
-    res.redirect("/");
+  // Jobs: delete
+  app.get('/delete/:id', (req: Request, res: Response) => {
+    s.deleteJob(String(req.params.id));
+    res.redirect('/');
   });
 
-  /* Companies: Index */
-  app.get("/companies", (_req, res) => {
-    const companies = s.listCompanies.all().map(h.companyRowToVm);
-    res.render("companies_index", { companies });
+  // Companies: index (→ getypter Wrapper)
+  app.get('/companies', (_req: Request, res: Response) => {
+    const companies = s.listCompanies().map(companyRowToVm);
+    res.render('companies_index', { companies });
   });
 
-  /* Companies: New + Create (inkl. optional erstem Kontakt) */
-  app.get("/companies/new", (req, res) => {
-    const msg = typeof req.query.msg === "string" ? req.query.msg : null;
-    res.render("companies_new", { msg });
+  // Companies: new
+  app.get('/companies/new', (_req: Request, res: Response) => {
+    res.render('companies_new', {});
   });
 
-  app.post("/companies/new", (req, res) => {
-    const c = h.requestToCompany(req.body);
-    if (!c.name) return res.redirect("/companies/new?msg=" + encodeURIComponent("Firmenname ist erforderlich"));
+  // Companies: new/create
+  app.post('/companies/new', (req: Request, res: Response) => {
+    const company = requestToCompany(req.body);
+    if (!company.name)
+      return res.redirect(
+        '/companies/new?msg=' +
+          encodeURIComponent('Firmenname ist erforderlich'),
+      );
     try {
-      s.insertCompany.run(c);
+      s.insertCompany(company);
     } catch {
-      return res.redirect("/companies/new?msg=" + encodeURIComponent("Unternehmen existiert bereits"));
+      return res.redirect(
+        '/companies/new?msg=' +
+          encodeURIComponent('Unternehmen existiert bereits'),
+      );
     }
 
-    const hasAnyContact =
-      (req.body.contactName && req.body.contactName.trim()) ||
-      (req.body.contactEmail && req.body.contactEmail.trim()) ||
-      (req.body.contactPhone && req.body.contactPhone.trim()) ||
-      (req.body.contactNote && req.body.contactNote.trim());
+    const hasContact =
+      (req.body.contactName && String(req.body.contactName).trim()) ||
+      (req.body.contactEmail && String(req.body.contactEmail).trim()) ||
+      (req.body.contactPhone && String(req.body.contactPhone).trim()) ||
+      (req.body.contactNote && String(req.body.contactNote).trim());
 
-    if (hasAnyContact) {
-      const ct = h.requestToContact(req.body, c.id);
-      s.insertContact.run(ct);
+    if (hasContact) {
+      s.insertContact(requestToContact(req.body, company.id));
     }
 
-    res.redirect(`/companies/${c.id}`);
+    res.redirect(`/companies/${company.id}`);
   });
 
-  /* Companies: Detail */
-  app.get("/companies/:id", (req, res) => {
-    const row = s.getCompanyById.get(String(req.params.id));
-    if (!row) return res.redirect("/companies");
-    const company = h.companyRowToVm(row);
-    const contacts = s.listContactsForCompany.all(company._id).map(h.contactRowToVm);
-    res.render("company_detail", { company, contacts });
+  // Companies: detail (→ getypter Wrapper)
+  app.get('/companies/:id', (req: Request, res: Response) => {
+    const row = s.getCompanyById(String(req.params.id));
+    if (!row) return res.redirect('/companies');
+    const company = companyRowToVm(row);
+    const contacts = s.listContactsForCompany(company._id).map(contactRowToVm);
+    res.render('company_detail', { company, contacts, renderMarkdown });
   });
 }
-
-module.exports = registerRoutes;

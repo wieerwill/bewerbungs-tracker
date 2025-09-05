@@ -1,3 +1,7 @@
 .pnpm-store/
 database/
 node_modules/
+dist/
+package-lock.json
+pnpm-workspace.yaml
+pnpm-lock.json

@@ -25,9 +25,45 @@ block content
           .meta-item
             span.meta-label Stadt
             span.meta-value= company.city
+        if company.linkedin_url || company.glassdoor_url || company.stepstone_url || company.hiring_page
+          h3 Links
+          .buttons
+            if company.linkedin_url
+              a.btn.secondary(href=company.linkedin_url rel="noopener") LinkedIn
+            if company.glassdoor_url
+              a.btn.secondary(href=company.glassdoor_url rel="noopener") Glassdoor
+            if company.stepstone_url
+              a.btn.secondary(href=company.stepstone_url rel="noopener") StepStone
+            if company.hiring_page
+              a.btn.secondary(href=company.hiring_page rel="noopener") Hiring-Page
+        if company.other_links_json
+          - let otherLinks=[];
+          - try { otherLinks = JSON.parse(company.other_links_json) } catch(e) { otherLinks=[] }
+          if otherLinks.length
+            .buttons
+              each l in otherLinks
+                a.btn.secondary(href=l.url rel="noopener")= l.label || l.url
+        if company.industry || company.size_range || company.career_email || company.phone
+          .meta-grid
+            if company.industry
+              .meta-item
+                span.meta-label Branche
+                span.meta-value= company.industry
+            if company.size_range
+              .meta-item
+                span.meta-label Größe
+                span.meta-value= company.size_range
+            if company.career_email
+              .meta-item
+                span.meta-label Karriere-E-Mail
+                span.meta-value: a(href=`mailto:${company.career_email}`)= company.career_email
+            if company.phone
+              .meta-item
+                span.meta-label Telefon
+                span.meta-value: a(href=`tel:${company.phone}`)= company.phone
       if company.note
         h3 Notizen
-        p!= company.note
+        .prose!= renderMarkdown(company.note)
 
     .card
       h2 Kontakte
@@ -53,6 +89,10 @@ block content
                     a(href=`tel:${ct.phone}`)= ct.phone
                   else
                     | —
-                td= ct.note || '—'
+                td
+                  if ct.note
+                    .prose.sm!= renderMarkdown(ct.note)
+                  else
+                    | —
       else
         p.muted Noch keine Kontakte
