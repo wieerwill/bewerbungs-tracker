@@ -67,7 +67,9 @@ block content
               .buttons
                 a.btn.secondary(href=`/detail/${job._id}`) View
                 a.btn.warn(href=`/edit/${job._id}`) Edit
-                a.btn.danger(href=`/delete/${job._id}`) Delete
+                form(method="POST", action=`/jobs/${job._id}?_method=DELETE`, style="display:inline")
+                  input(type="hidden", name="_csrf", value=csrfToken)
+                  button.btn.danger(type="submit") Delete
                 button.btn.secondary.js-copy-job(type="button", data-jobid=job._id) Kopieren
   else
     .card.center.max-w-sm

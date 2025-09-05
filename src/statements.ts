@@ -1,5 +1,4 @@
 import type { SqliteDatabase } from './database';
-import type Database from 'better-sqlite3';
 import type {
   Company,
   Contact,

@@ -5,33 +5,29 @@ Modernes UI, sichere lokale DB, komfortable Formulare, Markdown-Notizen und sinn
 
 ## Features
 
-* **Jobs verwalten**
+- **Jobs verwalten**
+  - Neu anlegen, bearbeiten, löschen
+  - Status-Toggles: _angeschrieben_ / _Antwort erhalten_
+  - Zuordnung **genau eines** Unternehmens & **optional eines** Kontakts
+  - Gehaltsspanne (von/bis), Zielgehalt, Währung/Zeitraum
+  - Meta: Work-Mode (onsite/hybrid/remote), Remote-Anteil, Seniorität, Anstellungs- & Vertragsart
+  - Startdatum, Frist, Quelle/Link, Bewerbungs-Kanal, Referral
+  - Beschreibung & Notizen als **Markdown**
 
-  * Neu anlegen, bearbeiten, löschen
-  * Status-Toggles: *angeschrieben* / *Antwort erhalten*
-  * Zuordnung **genau eines** Unternehmens & **optional eines** Kontakts
-  * Gehaltsspanne (von/bis), Zielgehalt, Währung/Zeitraum
-  * Meta: Work-Mode (onsite/hybrid/remote), Remote-Anteil, Seniorität, Anstellungs- & Vertragsart
-  * Startdatum, Frist, Quelle/Link, Bewerbungs-Kanal, Referral
-  * Beschreibung & Notizen als **Markdown**
+- **Unternehmen & Kontakte**
+  - Unternehmen separat anlegen
+  - Kontaktpersonen je Unternehmen
+  - Nützliche Felder/Links: Website, LinkedIn, Glassdoor, StepStone, Hiring-Page, Branche, Größe, Karriere-E-Mail, Telefon, weitere Links
 
-* **Unternehmen & Kontakte**
+- **UI/UX**
+  - Saubere Tabellen, Karten, Badges, moderne Buttons
+  - Startseite mit **Suche / Filter / Sortierung**
+  - Markdown-Rendering
 
-  * Unternehmen separat anlegen
-  * Kontaktpersonen je Unternehmen
-  * Nützliche Felder/Links: Website, LinkedIn, Glassdoor, StepStone, Hiring-Page, Branche, Größe, Karriere-E-Mail, Telefon, weitere Links
-
-* **UI/UX**
-
-  * Saubere Tabellen, Karten, Badges, moderne Buttons
-  * Startseite mit **Suche / Filter / Sortierung**
-  * Markdown-Rendering
-
-* **Technik**
-
-  * **TypeScript**
-  * **SQLite** Datei-DB, keine Server, keine Migration nötig
-  * Express + Pug, `better-sqlite3`, `morgan`
+- **Technik**
+  - **TypeScript**
+  - **SQLite** Datei-DB, keine Server, keine Migration nötig
+  - Express + Pug, `better-sqlite3`, `morgan`
 
 ## Projektstruktur
 
@@ -69,30 +65,28 @@ Keine zusätzliche Konfiguration nötig. Die SQLite-Datei wird automatisch unter
 
 ## Wichtige Routen (Auszug)
 
-* `GET /` – Übersicht (Suche/Filter/Sort)
-* `GET /new` – neuen Job anlegen (mit Company/Contact-Dropdown)
-* `POST /new` – Job speichern
-* `GET /detail/:id` – Job-Details
-* `GET /edit/:id` – Job bearbeiten (mit vorausgewählter Company/Contact)
-* `POST /edit/:id` – Job aktualisieren
-* `GET /toggle/:id/:field` – applied/answer toggeln
-* `GET /delete/:id` – Job löschen
-* `GET /companies` – Unternehmen Übersicht
-* `GET /companies/new` – neues Unternehmen anlegen (+ optional erster Kontakt)
-* `POST /companies/new` – Unternehmen speichern
-* `GET /companies/:id` – Unternehmens-Detail (inkl. Kontakte)
+- `GET /` – Übersicht (Suche/Filter/Sort)
+- `GET /new` – neuen Job anlegen (mit Company/Contact-Dropdown)
+- `POST /new` – Job speichern
+- `GET /detail/:id` – Job-Details
+- `GET /edit/:id` – Job bearbeiten (mit vorausgewählter Company/Contact)
+- `POST /edit/:id` – Job aktualisieren
+- `GET /toggle/:id/:field` – applied/answer toggeln
+- `GET /delete/:id` – Job löschen
+- `GET /companies` – Unternehmen Übersicht
+- `GET /companies/new` – neues Unternehmen anlegen (+ optional erster Kontakt)
+- `POST /companies/new` – Unternehmen speichern
+- `GET /companies/:id` – Unternehmens-Detail (inkl. Kontakte)
 
 > Hinweis: Für lokale Einfachheit sind einige „mutierende“ Aktionen als `GET` gehalten. In einer gehärteten Variante sollten diese als `POST/DELETE` mit CSRF-Schutz umgesetzt werden (siehe Roadmap).
-
 
 ## Konfiguration
 
 Standardwerte:
 
-* Host: `127.0.0.1`
-* Port: `8080`
+- Host: `127.0.0.1`
+- Port: `8080`
   → per `PORT`/`IP` überschreibbar (`pnpm start` liest Env Vars).
-
 
 ## Contribution Guide
 
@@ -101,50 +95,49 @@ Beiträge sind willkommen! Vorschlag:
 1. **Issue** aufmachen (Bug/Feature, kurzer Kontext).
 2. **Branch** erstellen (z. B. `feat/pagination`).
 3. **Entwickeln**
-   * TypeScript strikt halten (`pnpm build` ohne Fehler)
-   * Sauber typisieren, keine `any`-Leaks
-   * UI: bestehendes Design nutzen (Buttons, Cards, .table, .prose)
+   - TypeScript strikt halten (`pnpm build` ohne Fehler)
+   - Sauber typisieren, keine `any`-Leaks
+   - UI: bestehendes Design nutzen (Buttons, Cards, .table, .prose)
 4. **Tests** (optional, s. Roadmap)
 5. **PR** mit klarer Beschreibung, Screenshots bei UI-Changes
 
 Coding-Hinweise:
 
-* Datenfluss: `routes` → `statements`/`helpers` (keine SQL in Routen)
-* Validierung serverseitig (z. B. `zod`) – optional, aber gern gesehen
-* Markdown nur über `renderMarkdown` in Views ausgeben
+- Datenfluss: `routes` → `statements`/`helpers` (keine SQL in Routen)
+- Validierung serverseitig (z. B. `zod`) – optional, aber gern gesehen
+- Markdown nur über `renderMarkdown` in Views ausgeben
 
 ## Roadmap
 
-* [x] TypeScript-Refactor, modulare Struktur in `src/`
-* [x] SQLite (serverlos), WAL, Foreign Keys
-* [x] Jobs: CRUD, applied/answer Toggle
-* [x] Unternehmen: eigene Entität (Name unique), Kontakte
-* [x] Job↔Company/Contact Zuordnung per Dropdown
-* [x] Markdown für Beschreibung/Notizen (safe)
-* [x] Modernes UI + Light/Dark-Mode Toggle
-* [x] Suche/Filter/Sort in der Übersicht
-* [x] Gehalts- & Meta-Felder (Work-Mode, Seniorität, etc.)
-* [x] Firmenlinks (LinkedIn/Glassdoor/StepStone/…)
-* [x] Fix für Wildcard-Route (Express): Fallback via `app.use`
-* [x] ESLint/Prettier Konfiguration
-* [X] Clipboard Export von Jobs
-* [X] Export CSV von Companies
+- [x] TypeScript-Refactor, modulare Struktur in `src/`
+- [x] SQLite (serverlos), WAL, Foreign Keys
+- [x] Jobs: CRUD, applied/answer Toggle
+- [x] Unternehmen: eigene Entität (Name unique), Kontakte
+- [x] Job↔Company/Contact Zuordnung per Dropdown
+- [x] Markdown für Beschreibung/Notizen (safe)
+- [x] Modernes UI + Light/Dark-Mode Toggle
+- [x] Suche/Filter/Sort in der Übersicht
+- [x] Gehalts- & Meta-Felder (Work-Mode, Seniorität, etc.)
+- [x] Firmenlinks (LinkedIn/Glassdoor/StepStone/…)
+- [x] Fix für Wildcard-Route (Express): Fallback via `app.use`
+- [x] ESLint/Prettier Konfiguration
+- [x] Clipboard Export von Jobs
+- [x] Export CSV von Companies
 
-* [ ] REST-Korrekturen: Toggle/Delete via `POST/DELETE`, CSRF-Token
-* [ ] Server-Validierung (z. B. `zod`) + Fehleranzeigen im UI
-* [ ] Paginierung für Job-Liste
-* [ ] Sortierbare Spaltenköpfe (Client)
-* [ ] Prüfung: `contactId` gehört zur `companyId` beim Speichern
-* [ ] Import (JSON/CSV) von Jobs/Companies
+- [ ] REST-Korrekturen: Toggle/Delete via `POST/DELETE`, CSRF-Token
+- [ ] Server-Validierung (z. B. `zod`) + Fehleranzeigen im UI
+- [ ] Paginierung für Job-Liste
+- [ ] Sortierbare Spaltenköpfe (Client)
+- [ ] Prüfung: `contactId` gehört zur `companyId` beim Speichern
+- [ ] Import (JSON/CSV) von Jobs/Companies
 
-* [ ] Tests (Unit mit Vitest, E2E leichtgewichtig)
-* [ ] Backup/Restore der `jobs.db` (z. B. ZIP-Download)
-* [ ] Datei-Anhänge (z. B. PDF CV, Anschreiben) – lokal unter `/uploads`
-* [ ] Aktivitäten/Timeline pro Job (Follow-ups, Termine)
-* [ ] i18n (Deutsch/Englisch Umschaltbar)
-* [ ] Barrierefreiheit (A11y-Audit, ARIA Feinheiten)
-* [ ] Desktop-Bundle (Electron) für „echte“ App-Experience
-
+- [ ] Tests (Unit mit Vitest, E2E leichtgewichtig)
+- [ ] Backup/Restore der `jobs.db` (z. B. ZIP-Download)
+- [ ] Datei-Anhänge (z. B. PDF CV, Anschreiben) – lokal unter `/uploads`
+- [ ] Aktivitäten/Timeline pro Job (Follow-ups, Termine)
+- [ ] i18n (Deutsch/Englisch Umschaltbar)
+- [ ] Barrierefreiheit (A11y-Audit, ARIA Feinheiten)
+- [ ] Desktop-Bundle (Electron) für „echte“ App-Experience
 
 ## FAQ
 

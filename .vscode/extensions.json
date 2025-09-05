@@ -1,7 +1,7 @@
 {
-    "recommendations": [
-        "fill-labs.dependi",
-        "dbaeumer.vscode-eslint",
-        "esbenp.prettier-vscode"
-    ]
+  "recommendations": [
+    "fill-labs.dependi",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode"
+  ]
 }

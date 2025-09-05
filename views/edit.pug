@@ -12,6 +12,8 @@ block content
       p.muted= msg
 
   .card
+    form(action=`/jobs/${job && job._id}`, method="POST")
+      input(type="hidden", name="_csrf", value=csrfToken)
     form(action=`/edit/${job && job._id}`, method="POST")
       // Stelle
       fieldset.form-section

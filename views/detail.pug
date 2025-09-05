@@ -10,20 +10,20 @@ block content
           button.btn.secondary.js-copy-job(type="button", data-jobid=job && job._id) Kopieren
           a.btn.secondary(href="/") Übersicht
           a.btn.warn(href=`/edit/${job._id}`) Bearbeiten
-          a.btn.danger(href=`/delete/${job._id}`) Löschen
+          form(method="POST", action=`/jobs/${job._id}?_method=DELETE`, style="display:inline")
+            input(type="hidden", name="_csrf", value=csrfToken)
+            button.btn.danger(type="submit") Löschen
     if job && (job.applied !== undefined || job.answer !== undefined)
       .stack-12
         .buttons
-          // Applied Toggle
-          if job.applied
-            a.btn.secondary.active(href=`/toggle/${job._id}/applied`) Angeschrieben ✓
-          else
-            a.btn.secondary(href=`/toggle/${job._id}/applied`) Noch nicht angeschrieben
-          // Answer Toggle
-          if job.answer
-            a.btn.secondary.active(href=`/toggle/${job._id}/answer`) Antwort erhalten ✓
-          else
-            a.btn.secondary(href=`/toggle/${job._id}/answer`) Keine Antwort
+          form(method="POST", action=`/jobs/${job._id}/toggle/applied`, style="display:inline")
+            input(type="hidden", name="_csrf", value=csrfToken)
+            button.btn.secondary(class=job.applied ? 'active' : '', type="submit")
+              = job.applied ? 'Angeschrieben ✓' : 'Noch nicht angeschrieben'
+          form(method="POST", action=`/jobs/${job._id}/toggle/answer`, style="display:inline")
+            input(type="hidden", name="_csrf", value=csrfToken)
+            button.btn.secondary(class=job.answer ? 'active' : '', type="submit")
+              = job.answer ? 'Antwort erhalten ✓' : 'Keine Antwort'
 
   if msg
     .card
