@@ -1,0 +1,13 @@
+{
+  "defaults": {
+    "standard": "WCAG2AA",
+    "timeout": 60000,
+    "hideElements": ".sr-only"
+  },
+  "urls": [
+    "http://127.0.0.1:8080/jobs",
+    "http://127.0.0.1:8080/jobs/new",
+    "http://127.0.0.1:8080/companies",
+    "http://127.0.0.1:8080/companies/new"
+  ]
+}

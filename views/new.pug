@@ -10,38 +10,39 @@ block content
       p.muted= msg
 
   .card
-    form(action="/jobs", method="POST")
+    form(action="/jobs", method="POST" novalidate)
       input(type="hidden", name="_csrf", value=csrfToken)
-    form(action="/new", method="POST")
       // Stelle
       fieldset.form-section
-        legend Abschnitt: Stelle
+        legend Stelle
         .row.row-2
           .field
-            label(for="job-title") Titel
-            input#job-title(type="text", name="jobTitle", placeholder="z. B. Embedded Software Engineer", required)
+            label(for="job-title") Titel *
+            input#job-title(type="text", name="jobTitle", placeholder="z. B. Embedded Software Engineer", required, aria-invalid=(errors && errors.jobTitle ? 'true' : 'false') aria-describedby=(errors && errors.jobTitle ? 'err-title' : null))
+            if errors && errors.jobTitle
+              p#err-title.role-alert(role="alert")= errors.jobTitle
           .field
             label(for="job-source") Quelle (optional)
-            input#job-source(type="url", name="jobSource", placeholder="Link zur Ausschreibung")
-        .field
-          label(for="job-description") Beschreibung
-          textarea#job-description(name="jobDescription", rows="4", placeholder="Kurzbeschreibung oder relevante Punkte …")
-        .field
-          label(for="job-note") Notizen
-          textarea#job-note(name="jobNote", rows="3", placeholder="Eigenes Fazit, nächste Schritte, Reminder …")
+            input#job-source(type="url", name="jobSource")
+          .field
+            label(for="job-description") Beschreibung
+            textarea#job-description(name="jobDescription", rows="4", placeholder="Kurzbeschreibung oder relevante Punkte …")
+          .field
+            label(for="job-note") Notizen
+            textarea#job-note(name="jobNote", rows="3", placeholder="Eigenes Fazit, nächste Schritte, Reminder …")
     
         fieldset.form-section
-          legend Abschnitt: Vergütung & Rahmen
+          legend Vergütung
           .row.row-3
             .field
               label(for="salaryMin") Gehalt von
-              input#salaryMin(type="number" step="100" name="salaryMin" placeholder="z. B. 60000")
+              input#salaryMin(type="number" step="100" name="salaryMin" inputmode="numeric")
             .field
               label(for="salaryMax") Gehalt bis
-              input#salaryMax(type="number" step="100" name="salaryMax" placeholder="z. B. 75000")
+              input#salaryMax(type="number" step="100" name="salaryMax" inputmode="numeric")
             .field
               label(for="salaryTarget") Zielgehalt
-              input#salaryTarget(type="number" step="100" name="salaryTarget" placeholder="z. B. 70000")
+              input#salaryTarget(type="number" step="100" name="salaryTarget" inputmode="numeric")
           .row.row-3
             .field
               label(for="salaryCurrency") Währung
@@ -101,24 +102,22 @@ block content
             label(for="job-source") Quell-URL (Ausschreibung)
             input#job-source(type="url" name="jobSource" placeholder="https://…")
 
-
-
       // Zuordnung: Unternehmen & Kontakt
       fieldset.form-section
-        legend Abschnitt: Zuordnung
+        legend Zuordnung
         .row.row-2
           .field
-            label(for="companyId") Unternehmen
-            select#companyId(name="companyId", required)
+            label(for="companyId") Unternehmen *
+            select#companyId(name="companyId", required aria-required="true" aria-describedby="company-help")
               option(value="" disabled selected hidden) — Unternehmen wählen —
               each c in companies
                 option(value=c.id)= c.name
-            .help Wähle ein bereits erfasstes Unternehmen.
+            small#company-help.muted Unternehmen muss vorab angelegt sein.
           .field
             label(for="contactId") Kontaktperson (optional)
-            select#contactId(name="contactId")
+            select#contactId(name="contactId" aria-describedby="contact-help")
               option(value="" selected) — Kein Kontakt —
-            .help Wird nach Unternehmenswahl befüllt.
+            small#contact-help.muted Liste wird nach Unternehmenswahl befüllt.
 
       .form-actions.buttons
         button.btn(type="submit") Speichern

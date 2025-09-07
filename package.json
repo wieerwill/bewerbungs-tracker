@@ -11,7 +11,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "eslint \"src/**/*.{ts,tsx}\" --fix",
-    "prepare": "husky"
+    "prepare": "husky",
+    "a11y": "pa11y-ci",
+    "icons": "node scripts/create-favicons.mjs"
   },
   "author": "",
   "license": "ISC",
@@ -56,7 +58,9 @@
     "globals": "^16.3.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.6",
+    "pa11y-ci": "^4.0.1",
     "prettier": "3.6.2",
+    "sharp": "^0.34.3",
     "ts-loader": "9.5.4",
     "ts-node": "10.9.2",
     "tsconfig-paths": "4.2.0",

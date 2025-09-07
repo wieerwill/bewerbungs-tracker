@@ -35,42 +35,38 @@ block content
       p.muted= msg
 
   if jobs && jobs.length
-    table.table
+    table.table(aria-describedby="jobs-help")
+      caption Bewerbungen – Übersicht
       thead
         tr
-          th.nr #
-          th Job
-          th Company
-          th Applied
-          th Answer
-          th.right Actions
+          th.scope(scope="col") #
+          th(scope="col") Job
+          th(scope="col") Unternehmen
+          th(scope="col") Angeschrieben
+          th(scope="col") Antwort
+          th(scope="col") Aktionen
       tbody
-        each job, index in jobs
+        each job, i in jobs
           tr
-            td #{index + 1}
+            td= i+1
+            td= job.title
+            td= job.company.name || '—'
             td
-              a(href=`/detail/${job._id}`)= job.title
-              if job.location
-                div.muted= job.location
-            td= job.company && job.company.name ? job.company.name : '—'
+              span(role="status" aria-label=(job.applied ? 'angeschrieben' : 'nicht angeschrieben'))
+                = job.applied ? 'Ja' : 'Nein'
             td
-              if job.applied
-                span.badge.badge-ok Ja
-              else
-                span.badge.badge-no Nein
+              span(role="status" aria-label=(job.answer ? 'Antwort erhalten' : 'Keine Antwort'))
+                = job.answer ? 'Ja' : 'Nein'
             td
-              if job.answer
-                span.badge.badge-ok Ja
-              else
-                span.badge.badge-no Nein
-            td.right
               .buttons
-                a.btn.secondary(href=`/detail/${job._id}`) View
-                a.btn.warn(href=`/edit/${job._id}`) Edit
+                a.btn.secondary(href=`/jobs/${job._id}`) Details
+                a.btn.warn(href=`/jobs/${job._id}/edit`) Bearbeiten
                 form(method="POST", action=`/jobs/${job._id}?_method=DELETE`, style="display:inline")
                   input(type="hidden", name="_csrf", value=csrfToken)
-                  button.btn.danger(type="submit") Delete
-                button.btn.secondary.js-copy-job(type="button", data-jobid=job._id) Kopieren
+                  button.btn.danger(type="submit") Löschen
+                button.btn.secondary.js-copy-job(type="button", data-jobid=job._id aria-label=`Job kopieren: ${job.title}`) Kopieren
+    p#jobs-help.muted Nutze Tabulator zur Navigation; Aktionen befinden sich in der letzten Spalte jeder Zeile.
+
   else
     .card.center.max-w-sm
       h2 Noch keine Jobs

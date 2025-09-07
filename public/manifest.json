@@ -1,0 +1,88 @@
+{
+  "name": "Bewerbungs-Tracker",
+  "short_name": "Bewerbungen",
+  "description": "Lokaler Bewerbungs-Tracker: Jobs, Unternehmen und Kontakte verwalten – offline-freundlich, ohne Server.",
+  "lang": "de-DE",
+  "dir": "ltr",
+
+  "id": "/",
+  "start_url": "/jobs",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+
+  "theme_color": "#0B5FFF",
+  "background_color": "#0B5FFF",
+
+  "categories": ["productivity", "business", "utilities"],
+  "iarc_rating_id": null,
+
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    { "src": "/favicon-32.png", "sizes": "32x32", "type": "image/png" },
+    { "src": "/favicon-16.png", "sizes": "16x16", "type": "image/png" }
+  ],
+
+  "shortcuts": [
+    {
+      "name": "Neuer Job",
+      "short_name": "Neu",
+      "description": "Schnellformular: neue Bewerbung anlegen",
+      "url": "/jobs/new",
+      "icons": [
+        { "src": "/favicon-192.png", "sizes": "192x192", "type": "image/png" }
+      ]
+    },
+    {
+      "name": "Unternehmen",
+      "short_name": "Firmen",
+      "description": "Unternehmensübersicht öffnen",
+      "url": "/companies",
+      "icons": [
+        { "src": "/favicon-192.png", "sizes": "192x192", "type": "image/png" }
+      ]
+    }
+  ],
+
+  "screenshots": [
+    {
+      "src": "/screenshots/jobs-list.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "label": "Jobs – Übersicht"
+    },
+    {
+      "src": "/screenshots/job-detail.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "label": "Job – Detail"
+    }
+  ],
+
+  "protocol_handlers": [
+    {
+      "protocol": "web+job",
+      "url": "/jobs/new?source=%s"
+    }
+  ],
+
+  "handle_links": "preferred",
+  "prefer_related_applications": false
+}

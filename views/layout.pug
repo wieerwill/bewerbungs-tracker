@@ -6,72 +6,70 @@ html(lang="de")
     meta(name="theme-color" content="#0f172a")
 
     meta(name="msapplication-TileColor" content="#ffffff")
-    //meta(name="msapplication-TileImage" content="/ms-icon-144x144.png")
-    //link(rel="apple-touch-icon" sizes="57x57" href="/apple-icon-57x57.png")
-    //link(rel="apple-touch-icon" sizes="60x60" href="/apple-icon-60x60.png")
-    //link(rel="apple-touch-icon" sizes="72x72" href="/apple-icon-72x72.png")
-    //link(rel="apple-touch-icon" sizes="76x76" href="/apple-icon-76x76.png")
-    //link(rel="apple-touch-icon" sizes="114x114" href="/apple-icon-114x114.png")
-    //link(rel="apple-touch-icon" sizes="120x120" href="/apple-icon-120x120.png")
-    //link(rel="apple-touch-icon" sizes="144x144" href="/apple-icon-144x144.png")
-    //link(rel="apple-touch-icon" sizes="152x152" href="/apple-icon-152x152.png")
-    //link(rel="apple-touch-icon" sizes="180x180" href="/apple-icon-180x180.png")
-    //link(rel="icon" type="image/png" sizes="192x192" href="/android-icon-192x192.png")
-    //link(rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png")
-    //link(rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png")
-    //link(rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png")
+    meta(name="msapplication-TileImage" content="/favicon.svg")
+    link(rel="icon" type="image/svg+xml" href="/favicon.svg")
+    link(rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png")
+    link(rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png")
+    link(rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png")
+    link(rel="icon" type="image/png" sizes="512x512" href="/favicon-512.png")
     //link(rel="manifest" href="/manifest.json")
 
     title #{typeof title !== 'undefined' ? title : 'Bewerbungs-Tracker'}
     link(rel="stylesheet", href="/styles.css")
 
 body
-  header.site-header
-    .container
+    a.skip-link(href="#main") Zum Inhalt springen
+    header.site-header(role="banner")
       a.brand(href="/")
         span.logo ◼
         span.brand-text Bewerbungs-Tracker
-      nav.main-nav
+      nav.main-nav(role="navigation" aria-label="Hauptnavigation")
         ul
-          li: a(href="/") Übersicht
-          li: a(href="/new") Neu
-          li: a(href="/companies") Unternehmen
+          li: a(href="/jobs" aria-current=(currentPath==='/jobs' ? 'page' : null)) Übersicht
+          li: a(href="/jobs/new" aria-current=(currentPath==='/jobs/new' ? 'page' : null)) Neuer Job
+          li: a(href="/companies" aria-current=(currentPath==='/companies' ? 'page' : null)) Unternehmen
 
-  main.site-main
-    .container
+    div#live-region(role="status" aria-live="polite" class="sr-only")
+
+    main#main(role="main" tabindex="-1")
       block content
-  footer.site-footer
-    .container
-      p
-        | made by 
-        a(href="http://github.com/wieerwill" rel="noopener")  WieErWill
+
+    footer(role="contentinfo")
+      p made by 
+        a(href="http://github.com/wieerwill") WieErWill
 
 script.
-  (function(){
-    async function copyJob(jobId, btn){
-      try{
-        const res = await fetch(`/api/jobs/${encodeURIComponent(jobId)}?format=markdown`);
-        if(!res.ok){ throw new Error('HTTP '+res.status); }
-        const text = await res.text();
-        await navigator.clipboard.writeText(text);
-        if(btn){ const old=btn.textContent; btn.textContent='Kopiert!'; btn.disabled=true; setTimeout(()=>{btn.textContent=old; btn.disabled=false;}, 1200); }
-      }catch(err){
-        alert('Kopieren fehlgeschlagen. Details in der Konsole.');
-        console.error('copyJob failed', err);
+    (function(){
+      async function copyJob(jobId, btn){
+        try{
+          const res = await fetch(`/api/jobs/${encodeURIComponent(jobId)}?format=markdown`);
+          if(!res.ok){ throw new Error('HTTP '+res.status); }
+          const text = await res.text();
+          await navigator.clipboard.writeText(text);
+          if(btn){ const old=btn.textContent; btn.textContent='Kopiert!'; btn.disabled=true; setTimeout(()=>{btn.textContent=old; btn.disabled=false;}, 1200); }
+        }catch(err){
+          alert('Kopieren fehlgeschlagen. Details in der Konsole.');
+          console.error('copyJob failed', err);
+        }
       }
-    }
-    document.addEventListener('click', (e)=>{
-      const t = e.target;
-      if(t && t.classList && t.classList.contains('js-copy-job')){
-        const jobId = t.getAttribute('data-jobid');
-        if(jobId) copyJob(jobId, t);
-      }
-    });
-  })();
+      document.addEventListener('click', (e)=>{
+        const t = e.target;
+        if(t && t.classList && t.classList.contains('js-copy-job')){
+          const jobId = t.getAttribute('data-jobid');
+          if(jobId) copyJob(jobId, t);
+        }
+      });
+    })();
 
-  document.addEventListener('submit', (e)=>{
-    const form = e.target;
-    if(!(form instanceof HTMLFormElement)) return;
-    const btn = form.querySelector('button[type="submit"]');
-    if(btn){ btn.setAttribute('disabled','true'); setTimeout(()=>btn.removeAttribute('disabled'), 1500); }
-  });
+    document.addEventListener('submit', (e)=>{
+      const form = e.target;
+      if(!(form instanceof HTMLFormElement)) return;
+      const btn = form.querySelector('button[type="submit"]');
+      if(btn){ btn.setAttribute('disabled','true'); setTimeout(()=>btn.removeAttribute('disabled'), 1500); }
+    });
+
+    // Focus main on navigation (helps SR & keyboard users)
+    if(document && location){
+      const main = document.getElementById('main');
+      main && main.focus();
+    }

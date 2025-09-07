@@ -124,7 +124,6 @@ Coding-Hinweise:
 - [x] Clipboard Export von Jobs
 - [x] Export CSV von Companies
 
-- [ ] REST-Korrekturen: Toggle/Delete via `POST/DELETE`, CSRF-Token
 - [ ] Server-Validierung (z. B. `zod`) + Fehleranzeigen im UI
 - [ ] Paginierung für Job-Liste
 - [ ] Sortierbare Spaltenköpfe (Client)
