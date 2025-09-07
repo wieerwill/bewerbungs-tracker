@@ -5,3 +5,4 @@ dist/
 package-lock.json
 pnpm-workspace.yaml
 pnpm-lock.json
+coverage/

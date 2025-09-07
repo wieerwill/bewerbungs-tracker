@@ -123,6 +123,7 @@ Coding-Hinweise:
 - [x] ESLint/Prettier Konfiguration
 - [x] Clipboard Export von Jobs
 - [x] Export CSV von Companies
+- [x] Tests (Unit mit Vitest)
 
 - [ ] Server-Validierung (z. B. `zod`) + Fehleranzeigen im UI
 - [ ] Paginierung für Job-Liste
@@ -131,7 +132,7 @@ Coding-Hinweise:
 - [ ] Import (JSON/CSV) von Jobs/Companies
 - [ ] Screenshots
 
-- [ ] Tests (Unit mit Vitest, E2E leichtgewichtig)
+- [ ] mehr Tests (Unit mit Vitest, E2E leichtgewichtig)
 - [ ] Backup/Restore der `jobs.db` (z. B. ZIP-Download)
 - [ ] Datei-Anhänge (z. B. PDF CV, Anschreiben) – lokal unter `/uploads`
 - [ ] Aktivitäten/Timeline pro Job (Follow-ups, Termine)

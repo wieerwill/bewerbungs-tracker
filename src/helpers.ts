@@ -15,7 +15,6 @@ function toNum(x: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-// Hilfsfunktion: erlaubt leeres oder valides JSON
 function safeJson(s: string): string | undefined {
   if (!s) return undefined;
   try {

@@ -7,6 +7,75 @@ import type {
   ListJobsParams,
 } from './types';
 
+function normalizeCompany(row: Partial<Company>): Company {
+  return {
+    id: row.id!, // required
+    name: row.name!, // required
+    website: row.website ?? null,
+    street: row.street ?? null,
+    city: row.city ?? null,
+    note: row.note ?? null,
+    linkedin_url: row.linkedin_url ?? null,
+    glassdoor_url: row.glassdoor_url ?? null,
+    stepstone_url: row.stepstone_url ?? null,
+    other_links_json: row.other_links_json ?? null,
+    industry: row.industry ?? null,
+    size_range: row.size_range ?? null,
+    hiring_page: row.hiring_page ?? null,
+    career_email: row.career_email ?? null,
+    phone: row.phone ?? null,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  } as Company;
+}
+
+function normalizeJob(row: Partial<JobRecord>): JobRecord {
+  return {
+    id: row.id!, // required
+    title: row.title!, // required
+    description: row.description ?? null,
+    note: row.note ?? null,
+    applied: (row.applied ?? 0) as 0 | 1,
+    answer: (row.answer ?? 0) as 0 | 1,
+    company_id: row.company_id ?? null,
+    contact_id: row.contact_id ?? null,
+
+    salary_min: row.salary_min ?? null,
+    salary_max: row.salary_max ?? null,
+    salary_target: row.salary_target ?? null,
+    salary_currency: row.salary_currency ?? null,
+    salary_period: (row.salary_period ?? null) as any,
+
+    work_mode: (row.work_mode ?? null) as any,
+    remote_ratio: row.remote_ratio ?? null,
+    seniority: (row.seniority ?? null) as any,
+    employment_type: (row.employment_type ?? null) as any,
+    contract_type: (row.contract_type ?? null) as any,
+
+    start_date: row.start_date ?? null,
+    deadline_date: row.deadline_date ?? null,
+    source_url: row.source_url ?? null,
+    application_channel: row.application_channel ?? null,
+    referral: (row.referral ?? 0) as 0 | 1,
+
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  } as JobRecord;
+}
+
+function normalizeContact(row: Partial<Contact>): Contact {
+  return {
+    id: row.id!, // required
+    company_id: row.company_id!, // required (FK)
+    name: row.name ?? null,
+    email: row.email ?? null,
+    phone: row.phone ?? null,
+    note: row.note ?? null,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  } as Contact;
+}
+
 export default function createStatements(db: SqliteDatabase) {
   // --- Companies (prepared) ---
   const stmtInsertCompany = db.prepare(`
@@ -136,10 +205,10 @@ export default function createStatements(db: SqliteDatabase) {
 
   // --- Typed wrappers (Companies) ---
   function insertCompany(row: Company) {
-    return stmtInsertCompany.run(row);
+    return stmtInsertCompany.run(normalizeCompany(row));
   }
   function updateCompany(row: Company) {
-    return stmtUpdateCompany.run(row);
+    return stmtUpdateCompany.run(normalizeCompany(row));
   }
   function deleteCompany(id: string) {
     return stmtDeleteCompanyById.run(id);
@@ -156,7 +225,7 @@ export default function createStatements(db: SqliteDatabase) {
 
   // --- Typed wrappers (Contacts) ---
   function insertContact(row: Contact) {
-    return stmtInsertContact.run(row);
+    return stmtInsertContact.run(normalizeContact(row));
   }
   function deleteContact(id: string) {
     return stmtDeleteContactById.run(id);
@@ -170,10 +239,10 @@ export default function createStatements(db: SqliteDatabase) {
 
   // --- Typed wrappers (Jobs) ---
   function insertJob(row: JobRecord) {
-    return stmtInsertJob.run(row);
+    return stmtInsertJob.run(normalizeJob(row));
   }
   function updateJob(row: JobRecord) {
-    return stmtUpdateJob.run(row);
+    return stmtUpdateJob.run(normalizeJob(row));
   }
   function deleteJob(id: string) {
     return stmtDeleteJobById.run(id);
