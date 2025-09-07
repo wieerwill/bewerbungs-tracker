@@ -43,7 +43,7 @@ export default function registerRoutes(app: Express, s: Statements) {
 
     const rows = s.listJobs({ query: q, status, sort });
     const jobs = rows.map(jobRowToVm);
-    res.render('index', { jobs, msg, q, status, sort });
+    res.render('job_index', { jobs, msg, q, status, sort });
   });
 
   // new form (with company/contact dropdowns)
@@ -52,7 +52,7 @@ export default function registerRoutes(app: Express, s: Statements) {
     const contactsByCompany = Object.fromEntries(
       companies.map((c) => [c.id, s.listContactsForCompany(c.id)]),
     );
-    res.render('new', { msg: null, companies, contactsByCompany });
+    res.render('job_new', { msg: null, companies, contactsByCompany });
   });
 
   // create
@@ -76,7 +76,7 @@ export default function registerRoutes(app: Express, s: Statements) {
       );
     const job = jobRowToVm(joined);
     const msg = typeof req.query.msg === 'string' ? req.query.msg : null;
-    res.render('detail', { job, msg, renderMarkdown });
+    res.render('job_detail', { job, msg, renderMarkdown });
   });
 
   // edit form
@@ -93,7 +93,7 @@ export default function registerRoutes(app: Express, s: Statements) {
       companies.map((c) => [c.id, s.listContactsForCompany(c.id)]),
     );
     const msg = typeof req.query.msg === 'string' ? req.query.msg : null;
-    res.render('edit', { job, msg, companies, contactsByCompany });
+    res.render('job_edit', { job, msg, companies, contactsByCompany });
   });
 
   // update (POST for simplicity)

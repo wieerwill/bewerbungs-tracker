@@ -1,0 +1,176 @@
+extends layout
+
+block content
+  .card
+    .card-header
+      h1 Neue Bewerbung
+
+  if msg
+    .card(role="status" aria-live="polite")
+      p.muted= msg
+
+  .card
+    form(action="/jobs", method="POST" novalidate)
+      input(type="hidden", name="_csrf", value=csrfToken)
+
+      // Stelle
+      fieldset.form-section
+        legend Stelle
+        .row.row-2
+          .field
+            label(for="job-title") Titel *
+            input#job-title(
+              type="text"
+              name="jobTitle"
+              placeholder="z. B. Embedded Software Engineer"
+              required
+              aria-invalid=(errors && errors.jobTitle ? 'true' : 'false')
+              aria-describedby=(errors && errors.jobTitle ? 'err-title' : null)
+              autocomplete="off"
+            )
+            if errors && errors.jobTitle
+              p#err-title.role-alert(role="alert")= errors.jobTitle
+          .field
+            label(for="job-description") Beschreibung
+            textarea#job-description(
+              name="jobDescription"
+              rows="4"
+              placeholder="Kurzbeschreibung oder relevante Punkte ..."
+            )
+        .field
+          label(for="job-note") Notizen
+          textarea#job-note(
+            name="jobNote"
+            rows="3"
+            placeholder="Eigenes Fazit, nächste Schritte, Reminder ..."
+          )
+
+      // Vergütung
+      fieldset.form-section
+        legend Vergütung
+        .row.row-3
+          .field
+            label(for="salaryMin") Gehalt von
+            input#salaryMin(type="number" step="100" name="salaryMin" inputmode="numeric" autocomplete="off")
+          .field
+            label(for="salaryMax") Gehalt bis
+            input#salaryMax(type="number" step="100" name="salaryMax" inputmode="numeric" autocomplete="off")
+          .field
+            label(for="salaryTarget") Zielgehalt
+            input#salaryTarget(type="number" step="100" name="salaryTarget" inputmode="numeric" autocomplete="off")
+        .row.row-3
+          .field
+            label(for="salaryCurrency") Währung
+            input#salaryCurrency(type="text" name="salaryCurrency" value="EUR" inputmode="text" autocomplete="off")
+          .field
+            label(for="salaryPeriod") Zeitraum
+            select#salaryPeriod(name="salaryPeriod")
+              option(value="year" selected) pro Jahr
+              option(value="month") pro Monat
+          .field
+            label(for="applicationChannel") Bewerbungs-Kanal
+            input#applicationChannel(type="text" name="applicationChannel" placeholder="LinkedIn, StepStone, ..." autocomplete="off")
+        .row.row-3
+          .field
+            label(for="workMode") Arbeitsmodus
+            select#workMode(name="workMode")
+              option(value="onsite") Vor Ort
+              option(value="hybrid" selected) Hybrid
+              option(value="remote") Remote
+          .field
+            label(for="remoteRatio") Remote-Anteil (%)
+            input#remoteRatio(type="number" min="0" max="100" step="5" name="remoteRatio" inputmode="numeric" autocomplete="off")
+          .field
+            label(for="seniority") Senioritätsstufe
+            select#seniority(name="seniority")
+              option(value="intern") Praktikum
+              option(value="junior") Junior
+              option(value="mid" selected) Mid
+              option(value="senior") Senior
+              option(value="lead") Lead
+        .row.row-3
+          .field
+            label(for="employmentType") Anstellungsart
+            select#employmentType(name="employmentType")
+              option(value="full-time" selected) Vollzeit
+              option(value="part-time") Teilzeit
+          .field
+            label(for="contractType") Vertrag
+            select#contractType(name="contractType")
+              option(value="permanent" selected) Unbefristet
+              option(value="fixed-term") Befristet
+              option(value="freelance") Freelance
+          .field
+            // Checkbox mit Label & id
+            input#referral(type="checkbox" name="referral")
+            label(for="referral") Referral / Empfehlung
+        .row.row-2
+          .field
+            label(for="startDate") Startdatum (geplant)
+            input#startDate(type="date" name="startDate" autocomplete="off")
+          .field
+            label(for="deadlineDate") Bewerbungsfrist
+            input#deadlineDate(type="date" name="deadlineDate" autocomplete="off")
+        .field
+          label(for="job-source") Quell-URL (Ausschreibung)
+          input#job-source(type="url" name="jobSource" placeholder="https://..." inputmode="url" autocomplete="off")
+
+      // Zuordnung: Unternehmen & Kontakt
+      fieldset.form-section
+        legend Zuordnung
+        .row.row-2
+          .field
+            label(for="companyId") Unternehmen *
+            select#companyId(name="companyId" required aria-required="true" aria-describedby="company-help")
+              option(value="" disabled selected hidden) — Unternehmen wählen —
+              each c in companies
+                option(value=c.id)= c.name
+            small#company-help.muted Unternehmen muss vorab angelegt sein.
+          .field
+            label(for="contactId") Kontaktperson (optional)
+            select#contactId(name="contactId" aria-describedby="contact-help" disabled aria-busy="false")
+              option(value="" selected) — Kein Kontakt —
+            small#contact-help.muted Liste wird nach Unternehmenswahl befüllt.
+            noscript
+              p.muted (JavaScript benötigt, um Kontakte passend zu laden.)
+
+      .form-actions.buttons
+        button.btn(type="submit") Speichern
+        a.btn.secondary(href="/jobs") Abbrechen
+
+  // Client-Logik: Kontakte nach Unternehmenswahl laden
+  script.
+    (function(){
+      const contactsByCompany = !{JSON.stringify(contactsByCompany || {})};
+      const companySel = document.getElementById('companyId');
+      const contactSel = document.getElementById('contactId');
+
+      function setBusy(b){ contactSel && contactSel.setAttribute('aria-busy', b ? 'true' : 'false'); }
+
+      function renderContacts(companyId){
+        if(!contactSel) return;
+        setBusy(true);
+        contactSel.disabled = true;
+        // clear
+        contactSel.innerHTML = '';
+        const optNone = document.createElement('option');
+        optNone.value = '';
+        optNone.textContent = '— Kein Kontakt —';
+        contactSel.appendChild(optNone);
+
+        const list = contactsByCompany[companyId] || [];
+        for(const ct of list){
+          const o = document.createElement('option');
+          o.value = ct.id;
+          o.textContent = ct.name || (ct.email || ct.phone || 'Kontakt ohne Namen');
+          contactSel.appendChild(o);
+        }
+        contactSel.disabled = false;
+        setBusy(false);
+      }
+
+      companySel && companySel.addEventListener('change', (e)=>{
+        const id = e.target && e.target.value;
+        if(id) renderContacts(id);
+      });
+    })();

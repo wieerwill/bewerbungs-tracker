@@ -5,33 +5,57 @@ block content
     .card-header
       h1 Unternehmen
       .buttons
-        a.btn.secondary(href="/api/companies.csv") CSV Export
+        a.btn.secondary(href="/api/companies.csv" download) CSV Export
         a.btn(href="/companies/new") + Neues Unternehmen
 
   if companies && companies.length
-    table.table
-      thead
-        tr
-          th.nr #
-          th Name
-          th Website
-          th Ort
-          th.right Actions
-      tbody
-        each c, i in companies
+    .table-wrap
+      table.table(aria-describedby="companies-help")
+        caption Unternehmen – Übersicht
+        thead
           tr
-            td #{i+1}
-            td: a(href=`/companies/${c._id}`)= c.name
-            td
-              if c.website
-                - const url = c.website.startsWith('http') ? c.website : `https://${c.website}`;
-                a(href=url rel="noopener")= c.website
-              else
-                | —
-            td= c.city || '—'
-            td.right
-              .buttons
-                a.btn.secondary(href=`/companies/${c._id}`) Details
+            th(scope="col" style="width:3rem") #
+            th(scope="col") Name
+            th(scope="col") Website
+            th(scope="col") Ort
+            th(scope="col") Größe
+            th(scope="col") Profile
+            th(scope="col") Aktionen
+        tbody
+          each c, i in companies
+            - const site = c.website ? (c.website.startsWith('http') ? c.website : `https://${c.website}`) : null
+            tr
+              td= i + 1
+              td
+                a.table-link(href=`/companies/${c._id}`)= c.name
+              td
+                if site
+                  a.truncate(href=site rel="noopener noreferrer" title=c.website)= c.website
+                else
+                  | —
+              td= c.city || '—'
+              td= c.size_range || '—'
+              td.nowrap
+                if c.linkedin_url
+                  a.pill(href=c.linkedin_url rel="noopener noreferrer" title="LinkedIn Profil")
+                    span.sr-only LinkedIn:
+                    | in
+                if c.glassdoor_url
+                  a.pill(href=c.glassdoor_url rel="noopener noreferrer" title="Glassdoor Profil")
+                    span.sr-only Glassdoor:
+                    | gd
+                if c.stepstone_url
+                  a.pill(href=c.stepstone_url rel="noopener noreferrer" title="StepStone Profil")
+                    span.sr-only StepStone:
+                    | st
+                if !c.linkedin_url && !c.glassdoor_url && !c.stepstone_url
+                  | —
+              td.nowrap
+                .buttons.nowrap
+                  a.btn.secondary(href=`/companies/${c._id}`) Details
+                  a.btn.warn(href=`/companies/${c._id}/edit`) Bearbeiten
+    p#companies-help.muted Tabellenspalten sind scrollbar, Profil-Kürzel: in=LinkedIn, gd=Glassdoor, st=StepStone.
+
   else
     .card.center.max-w-sm
       h2 Noch keine Unternehmen

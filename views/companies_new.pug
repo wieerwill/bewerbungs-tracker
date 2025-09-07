@@ -6,77 +6,87 @@ block content
       h1 Neues Unternehmen
 
   if msg
-    .card
+    .card(role="status" aria-live="polite")
       p.muted= msg
 
   .card
-    form(action="/companies", method="POST")
+    form(action="/companies", method="POST" novalidate)
       input(type="hidden", name="_csrf", value=csrfToken)
+
       fieldset.form-section
         legend Abschnitt: Unternehmen
         .row.row-2
           .field
-            label(for="company-name") Name
-            input#company-name(type="text", name="companyName", required, placeholder="z. B. Corpuls")
+            label(for="company-name") Name *
+            input#company-name(
+              type="text"
+              name="companyName"
+              required
+              placeholder="z. B. Corpuls"
+              autocomplete="organization"
+            )
+            small.muted Einzigartiger Firmenname (Groß/Kleinschreibung egal).
           .field
             label(for="company-website") Website
-            input#company-website(type="url", name="companyWebsite", placeholder="https://…")
+            input#company-website(type="url" name="companyWebsite" placeholder="https://..." inputmode="url" autocomplete="url")
+        .row.row-2
           .field
             label(for="company-street") Straße
-            input#company-street(type="text", name="companyStreet")
+            input#company-street(type="text" name="companyStreet" autocomplete="address-line1")
           .field
             label(for="company-city") Stadt
-            input#company-city(type="text", name="companyCity")
+            input#company-city(type="text" name="companyCity" autocomplete="address-level2")
         .row.row-2
           .field
             label(for="company-linkedin") LinkedIn
-            input#company-linkedin(type="url", name="companyLinkedIn", placeholder="https://www.linkedin.com/company/…")
+            input#company-linkedin(type="url" name="companyLinkedIn" placeholder="https://www.linkedin.com/company/..." inputmode="url" autocomplete="url")
           .field
             label(for="company-glassdoor") Glassdoor
-            input#company-glassdoor(type="url", name="companyGlassdoor", placeholder="https://www.glassdoor.de/…")
+            input#company-glassdoor(type="url" name="companyGlassdoor" placeholder="https://www.glassdoor.de/..." inputmode="url" autocomplete="url")
         .row.row-2
           .field
             label(for="company-stepstone") StepStone
-            input#company-stepstone(type="url", name="companyStepstone", placeholder="https://www.stepstone.de/…")
+            input#company-stepstone(type="url" name="companyStepstone" placeholder="https://www.stepstone.de/..." inputmode="url" autocomplete="url")
           .field
             label(for="company-hiringpage") Hiring-Page
-            input#company-hiringpage(type="url", name="companyHiringPage", placeholder="https://…/jobs")
+            input#company-hiringpage(type="url" name="companyHiringPage" placeholder="https://.../jobs" inputmode="url" autocomplete="url")
         .row.row-2
           .field
             label(for="company-industry") Branche
-            input#company-industry(type="text", name="companyIndustry", placeholder="z. B. Medizintechnik")
+            input#company-industry(type="text" name="companyIndustry" placeholder="z. B. Medizintechnik")
           .field
             label(for="company-size") Größe
-            input#company-size(type="text", name="companySizeRange", placeholder="z. B. 200-500")
+            input#company-size(type="text" name="companySizeRange" placeholder="z. B. 200–500")
         .row.row-2
           .field
             label(for="company-career-email") Karriere-E-Mail
-            input#company-career-email(type="email", name="companyCareerEmail")
+            input#company-career-email(type="email" name="companyCareerEmail" autocomplete="email" inputmode="email")
           .field
             label(for="company-phone") Telefon
-            input#company-phone(type="tel", name="companyPhone")
+            input#company-phone(type="tel" name="companyPhone" autocomplete="tel" inputmode="tel")
         .field
           label(for="company-otherlinks") Weitere Links (JSON)
-          textarea#company-otherlinks(name="companyOtherLinksJson", rows="3" placeholder='z. B. [{"label":"Kununu","url":"https://…"}]')
+          textarea#company-otherlinks(name="companyOtherLinksJson" rows="3" placeholder='z. B. [{"label":"Kununu","url":"https://..."}]')
+          small.muted Erwartet ein JSON-Array mit Objekten { label, url }.
         .field
-          label(for="company-note") Notizen
-          textarea#company-note(name="companyNote", rows="3")
+          label(for="company-note") Notizen (Markdown)
+          textarea#company-note(name="companyNote" rows="3")
 
       fieldset.form-section
         legend Abschnitt: Kontakt (optional)
         .row.row-3
           .field
             label(for="contact-name") Name
-            input#contact-name(type="text", name="contactName")
+            input#contact-name(type="text" name="contactName" autocomplete="name")
           .field
             label(for="contact-email") E-Mail
-            input#contact-email(type="email", name="contactEmail")
+            input#contact-email(type="email" name="contactEmail" autocomplete="email" inputmode="email")
           .field
             label(for="contact-phone") Telefon
-            input#contact-phone(type="tel", name="contactPhone")
+            input#contact-phone(type="tel" name="contactPhone" autocomplete="tel" inputmode="tel")
         .field
-          label(for="contact-note") Notizen
-          textarea#contact-note(name="contactNote", rows="3")
+          label(for="contact-note") Notizen (Markdown)
+          textarea#contact-note(name="contactNote" rows="3")
 
       .form-actions.buttons
         button.btn(type="submit") Speichern

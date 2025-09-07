@@ -3,6 +3,8 @@
 Ein schlanker, lokal laufender Tracker für Bewerbungen - ideal, um Jobs, Unternehmen und Kontakte **ohne Server** zu verwalten.
 Modernes UI, sichere lokale DB, komfortable Formulare, Markdown-Notizen und sinnvolle Felder (Gehalt, Work-Mode, Seniorität u.v.m.).
 
+![](public/screenshots/jobs-list.png)
+
 ## Features
 
 - **Jobs verwalten**
@@ -32,16 +34,16 @@ Modernes UI, sichere lokale DB, komfortable Formulare, Markdown-Notizen und sinn
 ## Projektstruktur
 
 ```
-├─ database/               # SQLite-Datei (jobs.db)
-├─ public/                 # Static assets (CSS, Icons, …)
-├─ views/                  # Pug Views (index, new, edit, detail, companies_*)
+├─ database/               # SQLite-Datei
+├─ public/                 # Static assets (CSS, Icons, ...)
+├─ views/                  # Pug Views (index, new, edit, detail, ...)
 └─ src/
-   ├─ index.ts             # App-Bootstrap (Express)
+   ├─ index.ts             # App-Bootstrap
    ├─ database.ts          # SQLite öffnen, PRAGMA, Schema
-   ├─ statements.ts        # SQL-Wrapper (typisiert)
-   ├─ helpers.ts           # Mapper: Request↔Record, Row↔ViewModel
-   ├─ routes.ts            # Alle Routen (Jobs, Companies, Contacts)
-   └─ markdown.ts          # Markdown render (safe)
+   ├─ statements.ts        # SQL-Wrapper
+   ├─ helpers.ts           # Mapper: Request<->Record, Row<->ViewModel
+   ├─ routes.ts            # Alle Routen
+   └─ markdown.ts          # Markdown render
 ```
 
 ## Schnellstart (mit pnpm)
@@ -66,17 +68,17 @@ Keine zusätzliche Konfiguration nötig. Die SQLite-Datei wird automatisch unter
 ## Wichtige Routen (Auszug)
 
 - `GET /` - Übersicht (Suche/Filter/Sort)
-- `GET /new` - neuen Job anlegen (mit Company/Contact-Dropdown)
+- `GET /new` - neuen Job anlegen
 - `POST /new` - Job speichern
 - `GET /detail/:id` - Job-Details
-- `GET /edit/:id` - Job bearbeiten (mit vorausgewählter Company/Contact)
+- `GET /edit/:id` - Job bearbeiten
 - `POST /edit/:id` - Job aktualisieren
 - `GET /toggle/:id/:field` - applied/answer toggeln
 - `GET /delete/:id` - Job löschen
 - `GET /companies` - Unternehmen Übersicht
-- `GET /companies/new` - neues Unternehmen anlegen (+ optional erster Kontakt)
+- `GET /companies/new` - neues Unternehmen anlegen
 - `POST /companies/new` - Unternehmen speichern
-- `GET /companies/:id` - Unternehmens-Detail (inkl. Kontakte)
+- `GET /companies/:id` - Unternehmens-Detail
 
 ## Konfiguration
 
@@ -111,12 +113,12 @@ Coding-Hinweise:
 - [x] SQLite (serverlos), WAL, Foreign Keys
 - [x] Jobs: CRUD, applied/answer Toggle
 - [x] Unternehmen: eigene Entität (Name unique), Kontakte
-- [x] Job↔Company/Contact Zuordnung per Dropdown
+- [x] Job<->Company/Contact Zuordnung per Dropdown
 - [x] Markdown für Beschreibung/Notizen (safe)
 - [x] Modernes UI + Light/Dark-Mode Toggle
 - [x] Suche/Filter/Sort in der Übersicht
 - [x] Gehalts- & Meta-Felder (Work-Mode, Seniorität, etc.)
-- [x] Firmenlinks (LinkedIn/Glassdoor/StepStone/…)
+- [x] Firmenlinks (LinkedIn/Glassdoor/StepStone/...)
 - [x] Fix für Wildcard-Route (Express): Fallback via `app.use`
 - [x] ESLint/Prettier Konfiguration
 - [x] Clipboard Export von Jobs

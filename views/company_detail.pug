@@ -7,11 +7,17 @@ block content
       .buttons
         a.btn.secondary(href="/companies") Zur Übersicht
         a.btn.warn(href=`/companies/${company._id}/edit`) Bearbeiten
-        form(method="POST", action=`/companies/${company._id}?_method=DELETE`, style="display:inline", onsubmit="return confirm('Unternehmen wirklich löschen? Diese Aktion entfernt auch alle Kontakte. Jobs bleiben erhalten, verlieren aber die Zuordnung.');")
+        form(
+          method="POST",
+          action=`/companies/${company._id}?_method=DELETE`,
+          style="display:inline",
+          onsubmit="return confirm('Unternehmen wirklich löschen? Diese Aktion entfernt auch alle Kontakte. Jobs bleiben erhalten, verlieren aber die Zuordnung.');"
+        )
           input(type="hidden", name="_csrf", value=csrfToken)
           button.btn.danger(type="submit" aria-label=`${company.name} löschen`) Löschen
 
   .row.row-2
+    // Unternehmensdaten
     .card
       h2 Unternehmensdaten
       .meta-grid
@@ -20,7 +26,7 @@ block content
             span.meta-label Website
             span.meta-value
               - const u = company.website.startsWith('http') ? company.website : `https://${company.website}`;
-              a(href=u rel="noopener")= company.website
+              a.truncate(href=u rel="noopener noreferrer" title=company.website)= company.website
         if company.street
           .meta-item
             span.meta-label Straße
@@ -29,74 +35,84 @@ block content
           .meta-item
             span.meta-label Stadt
             span.meta-value= company.city
-        if company.linkedin_url || company.glassdoor_url || company.stepstone_url || company.hiring_page
-          h3 Links
+        if company.industry
+          .meta-item
+            span.meta-label Branche
+            span.meta-value= company.industry
+        if company.size_range
+          .meta-item
+            span.meta-label Größe
+            span.meta-value= company.size_range
+        if company.career_email
+          .meta-item
+            span.meta-label Karriere-E-Mail
+            span.meta-value
+              a(href=`mailto:${company.career_email}`)= company.career_email
+        if company.phone
+          .meta-item
+            span.meta-label Telefon
+            span.meta-value
+              a(href=`tel:${company.phone}`)= company.phone
+
+      // Offizielle Profile
+      if company.linkedin_url || company.glassdoor_url || company.stepstone_url || company.hiring_page
+        h3 Profile & Karriere
+        .buttons
+          if company.linkedin_url
+            a.btn.secondary(href=company.linkedin_url rel="noopener noreferrer") LinkedIn
+          if company.glassdoor_url
+            a.btn.secondary(href=company.glassdoor_url rel="noopener noreferrer") Glassdoor
+          if company.stepstone_url
+            a.btn.secondary(href=company.stepstone_url rel="noopener noreferrer") StepStone
+          if company.hiring_page
+            a.btn.secondary(href=company.hiring_page rel="noopener noreferrer") Hiring-Page
+
+      // Weitere Links (JSON)
+      if company.other_links_json
+        - let otherLinks=[];
+        - try { otherLinks = JSON.parse(company.other_links_json) } catch(e) { otherLinks=[] }
+        if otherLinks.length
+          h3 Weitere Links
           .buttons
-            if company.linkedin_url
-              a.btn.secondary(href=company.linkedin_url rel="noopener") LinkedIn
-            if company.glassdoor_url
-              a.btn.secondary(href=company.glassdoor_url rel="noopener") Glassdoor
-            if company.stepstone_url
-              a.btn.secondary(href=company.stepstone_url rel="noopener") StepStone
-            if company.hiring_page
-              a.btn.secondary(href=company.hiring_page rel="noopener") Hiring-Page
-        if company.other_links_json
-          - let otherLinks=[];
-          - try { otherLinks = JSON.parse(company.other_links_json) } catch(e) { otherLinks=[] }
-          if otherLinks.length
-            .buttons
-              each l in otherLinks
-                a.btn.secondary(href=l.url rel="noopener")= l.label || l.url
-        if company.industry || company.size_range || company.career_email || company.phone
-          .meta-grid
-            if company.industry
-              .meta-item
-                span.meta-label Branche
-                span.meta-value= company.industry
-            if company.size_range
-              .meta-item
-                span.meta-label Größe
-                span.meta-value= company.size_range
-            if company.career_email
-              .meta-item
-                span.meta-label Karriere-E-Mail
-                span.meta-value: a(href=`mailto:${company.career_email}`)= company.career_email
-            if company.phone
-              .meta-item
-                span.meta-label Telefon
-                span.meta-value: a(href=`tel:${company.phone}`)= company.phone
+            each l in otherLinks
+              if l && l.url
+                a.btn.secondary(href=l.url rel="noopener noreferrer")= l.label || l.url
+
       if company.note
         h3 Notizen
         .prose!= renderMarkdown(company.note)
 
+    // Kontakte
     .card
       h2 Kontakte
       if contacts && contacts.length
-        table.table
-          thead
-            tr
-              th Name
-              th E-Mail
-              th Telefon
-              th Notiz
-          tbody
-            each ct in contacts
+        .table-wrap
+          table.table
+            caption Kontaktpersonen beim Unternehmen
+            thead
               tr
-                td= ct.name || '—'
-                td
-                  if ct.email
-                    a(href=`mailto:${ct.email}`)= ct.email
-                  else
-                    | —
-                td
-                  if ct.phone
-                    a(href=`tel:${ct.phone}`)= ct.phone
-                  else
-                    | —
-                td
-                  if ct.note
-                    .prose.sm!= renderMarkdown(ct.note)
-                  else
-                    | —
+                th(scope="col") Name
+                th(scope="col") E-Mail
+                th(scope="col") Telefon
+                th(scope="col") Notiz
+            tbody
+              each ct in contacts
+                tr
+                  td= ct.name || '—'
+                  td
+                    if ct.email
+                      a(href=`mailto:${ct.email}`)= ct.email
+                    else
+                      | —
+                  td
+                    if ct.phone
+                      a(href=`tel:${ct.phone}`)= ct.phone
+                    else
+                      | —
+                  td
+                    if ct.note
+                      .prose.sm!= renderMarkdown(ct.note)
+                    else
+                      | —
       else
         p.muted Noch keine Kontakte

@@ -8,63 +8,65 @@ block content
         p.muted #{company.name}
 
   if msg
-    .card
+    .card(role="status" aria-live="polite")
       p.muted= msg
 
   // Company Form
   .card
-    form(action=`/companies/${company._id}`, method="POST")
+    form(action=`/companies/${company._id}`, method="POST" novalidate)
       input(type="hidden", name="_csrf", value=csrfToken)
       fieldset.form-section
         legend Stammdaten
         .row.row-2
           .field
             label(for="companyName") Name *
-            input#companyName(type="text", name="companyName", required value=company.name)
+            input#companyName(type="text", name="companyName", required value=company.name autocomplete="organization")
+            small.muted Einzigartiger Firmenname (Groß/Kleinschreibung egal).
           .field
             label(for="companyWebsite") Website
-            input#companyWebsite(type="url", name="companyWebsite", value=company.website)
+            input#companyWebsite(type="url", name="companyWebsite", value=company.website autocomplete="url" inputmode="url")
         .row.row-2
           .field
             label(for="companyStreet") Straße
-            input#companyStreet(type="text", name="companyStreet", value=company.street)
+            input#companyStreet(type="text", name="companyStreet", value=company.street autocomplete="address-line1")
           .field
             label(for="companyCity") Stadt
-            input#companyCity(type="text", name="companyCity", value=company.city)
+            input#companyCity(type="text", name="companyCity", value=company.city autocomplete="address-level2")
         .row.row-2
           .field
             label(for="companyLinkedIn") LinkedIn
-            input#companyLinkedIn(type="url", name="companyLinkedIn", value=company.linkedin_url)
+            input#companyLinkedIn(type="url", name="companyLinkedIn", value=company.linkedin_url autocomplete="url" inputmode="url" placeholder="https://www.linkedin.com/company/...")
           .field
             label(for="companyGlassdoor") Glassdoor
-            input#companyGlassdoor(type="url", name="companyGlassdoor", value=company.glassdoor_url)
+            input#companyGlassdoor(type="url", name="companyGlassdoor", value=company.glassdoor_url autocomplete="url" inputmode="url" placeholder="https://www.glassdoor.de/...")
         .row.row-2
           .field
             label(for="companyStepstone") StepStone
-            input#companyStepstone(type="url", name="companyStepstone", value=company.stepstone_url)
+            input#companyStepstone(type="url", name="companyStepstone", value=company.stepstone_url autocomplete="url" inputmode="url" placeholder="https://www.stepstone.de/...")
           .field
             label(for="companyHiringPage") Hiring-Page
-            input#companyHiringPage(type="url", name="companyHiringPage", value=company.hiring_page)
+            input#companyHiringPage(type="url", name="companyHiringPage", value=company.hiring_page autocomplete="url" inputmode="url" placeholder="https://.../jobs")
         .row.row-2
           .field
             label(for="companyIndustry") Branche
-            input#companyIndustry(type="text", name="companyIndustry", value=company.industry)
+            input#companyIndustry(type="text", name="companyIndustry", value=company.industry placeholder="z. B. Medizintechnik")
           .field
             label(for="companySizeRange") Größe
-            input#companySizeRange(type="text", name="companySizeRange", value=company.size_range)
+            input#companySizeRange(type="text", name="companySizeRange", value=company.size_range placeholder="z. B. 200–500")
         .row.row-2
           .field
             label(for="companyCareerEmail") Karriere-E-Mail
-            input#companyCareerEmail(type="email", name="companyCareerEmail", value=company.career_email)
+            input#companyCareerEmail(type="email", name="companyCareerEmail", value=company.career_email autocomplete="email" inputmode="email")
           .field
             label(for="companyPhone") Telefon
-            input#companyPhone(type="tel", name="companyPhone", value=company.phone)
+            input#companyPhone(type="tel", name="companyPhone", value=company.phone autocomplete="tel" inputmode="tel")
         .field
           label(for="companyNote") Notizen (Markdown)
           textarea#companyNote(name="companyNote", rows="3")= company.note || ''
         .field
           label(for="companyOtherLinksJson") Weitere Links (JSON)
-          textarea#companyOtherLinksJson(name="companyOtherLinksJson", rows="3")= company.other_links_json || ''
+          textarea#companyOtherLinksJson(name="companyOtherLinksJson", rows="3" placeholder='z. B. [{"label":"Kununu","url":"https://..."}]')= company.other_links_json || ''
+          small.muted Erwartet ein JSON-Array mit Objekten { label, url }.
       .form-actions.buttons
         button.btn(type="submit") Speichern
         a.btn.secondary(href=`/companies/${company._id}`) Abbrechen
@@ -74,39 +76,39 @@ block content
     .card-header
       h2 Mitarbeiter / Kontakte
     if contacts && contacts.length
-      table.table
-        thead
-          tr
-            th Name
-            th E-Mail
-            th Telefon
-            th Notizen
-            th Aktionen
-        tbody
-          each ct in contacts
+      .table-wrap
+        table.table
+          thead
             tr
-              td
-                form(method="POST", action=`/companies/${company._id}/contacts/${ct._id}`)
-                  input(type="hidden", name="_csrf", value=csrfToken)
-                  input(type="text", name="contactName", value=ct.name, placeholder="Name")
-              td
-                form(method="POST", action=`/companies/${company._id}/contacts/${ct._id}`)
-                  input(type="hidden", name="_csrf", value=csrfToken)
-                  input(type="email", name="contactEmail", value=ct.email, placeholder="E-Mail")
-              td
-                form(method="POST", action=`/companies/${company._id}/contacts/${ct._id}`)
-                  input(type="hidden", name="_csrf", value=csrfToken)
-                  input(type="tel", name="contactPhone", value=ct.phone, placeholder="Telefon")
-              td
-                form(method="POST", action=`/companies/${company._id}/contacts/${ct._id}`)
-                  input(type="hidden", name="_csrf", value=csrfToken)
-                  textarea(name="contactNote", rows="2", placeholder="Notiz")= ct.note || ''
-              td
-                .buttons
-                  button.btn.small(type="submit" formmethod="post" formaction=`/companies/${company._id}/contacts/${ct._id}`) Speichern
-                  form(method="POST", action=`/companies/${company._id}/contacts/${ct._id}?_method=DELETE`, style="display:inline")
+              th(scope="col") Name
+              th(scope="col") E-Mail
+              th(scope="col") Telefon
+              th(scope="col") Notizen
+              th(scope="col") Aktionen
+          tbody
+            each ct in contacts
+              // Jede Kontaktzeile = ein Formular
+              tr
+                td(colspan="5" style="padding:0; border:0;")
+                  form(method="POST", action=`/companies/${company._id}/contacts/${ct._id}`, class="row-form")
                     input(type="hidden", name="_csrf", value=csrfToken)
-                    button.btn.danger.small(type="submit") Löschen
+                    table.table.row-inner
+                      tbody
+                        tr
+                          td
+                            input(type="text", name="contactName", value=ct.name, placeholder="Name" autocomplete="name")
+                          td
+                            input(type="email", name="contactEmail", value=ct.email, placeholder="E-Mail" autocomplete="email" inputmode="email")
+                          td
+                            input(type="tel", name="contactPhone", value=ct.phone, placeholder="Telefon" autocomplete="tel" inputmode="tel")
+                          td
+                            textarea(name="contactNote", rows="2", placeholder="Notiz")= ct.note || ''
+                          td
+                            .buttons
+                              button.btn.small(type="submit") Speichern
+                              form(method="POST", action=`/companies/${company._id}/contacts/${ct._id}?_method=DELETE`, style="display:inline")
+                                input(type="hidden", name="_csrf", value=csrfToken)
+                                button.btn.danger.small(type="submit" aria-label=`Kontakt ${ct.name || ct.email || ct.phone || ct._id} löschen`) Löschen
     else
       p.muted Keine Kontakte vorhanden.
 
@@ -118,15 +120,15 @@ block content
         .row.row-3
           .field
             label(for="newContactName") Name
-            input#newContactName(type="text", name="contactName", placeholder="z. B. Max Mustermann")
+            input#newContactName(type="text", name="contactName", placeholder="z. B. Max Mustermann" autocomplete="name")
           .field
             label(for="newContactEmail") E-Mail
-            input#newContactEmail(type="email", name="contactEmail", placeholder="max@firma.de")
+            input#newContactEmail(type="email", name="contactEmail", placeholder="max@firma.de" autocomplete="email" inputmode="email")
           .field
             label(for="newContactPhone") Telefon
-            input#newContactPhone(type="tel", name="contactPhone", placeholder="+49 …")
+            input#newContactPhone(type="tel", name="contactPhone", placeholder="+49 ..." autocomplete="tel" inputmode="tel")
         .field
-          label(for="newContactNote") Notiz
+          label(for="newContactNote") Notiz (optional)
           textarea#newContactNote(name="contactNote", rows="2")
       .form-actions.buttons
         button.btn(type="submit") Kontakt hinzufügen

@@ -1,35 +1,44 @@
 extends layout
 
 block content
-  // Kopfkarte mit Titel und Status
+  // Kopf: Titel, Aktionen, Status-Toggles
   .card
     .card-header
       h1= job && job.title ? job.title : 'Bewerbung'
       .buttons
         if job && job._id
-          button.btn.secondary.js-copy-job(type="button", data-jobid=job && job._id) Kopieren
-          a.btn.secondary(href="/") Übersicht
-          a.btn.warn(href=`/edit/${job._id}`) Bearbeiten
+          button.btn.secondary.js-copy-job(type="button", data-jobid=job._id, aria-label=`Job kopieren: ${job.title || ''}`) Kopieren
+          noscript
+            a.btn.secondary(href=`/api/jobs/${job._id}?format=markdown`) Kopieren (Markdown)
+          a.btn.secondary(href="/jobs") Übersicht
+          a.btn.warn(href=`/jobs/${job._id}/edit`) Bearbeiten
           form(method="POST", action=`/jobs/${job._id}?_method=DELETE`, style="display:inline")
             input(type="hidden", name="_csrf", value=csrfToken)
-            button.btn.danger(type="submit") Löschen
+            button.btn.danger(type="submit" aria-label="Bewerbung löschen") Löschen
+
     if job && (job.applied !== undefined || job.answer !== undefined)
       .stack-12
         .buttons
           form(method="POST", action=`/jobs/${job._id}/toggle/applied`, style="display:inline")
             input(type="hidden", name="_csrf", value=csrfToken)
-            button.btn.secondary(class=job.applied ? 'active' : '', type="submit", aria-pressed=(job.applied ? 'true' : 'false'))
-              = job.applied ? 'Angeschrieben ✓' : 'Noch nicht angeschrieben'
+            button.btn.secondary(
+              class=job.applied ? 'active' : ''
+              type="submit"
+              aria-pressed=(job.applied ? 'true' : 'false')
+            )= job.applied ? 'Angeschrieben ✓' : 'Noch nicht angeschrieben'
           form(method="POST", action=`/jobs/${job._id}/toggle/answer`, style="display:inline")
             input(type="hidden", name="_csrf", value=csrfToken)
-            button.btn.secondary(class=job.answer ? 'active' : '', type="submit")
-              = job.answer ? 'Antwort erhalten ✓' : 'Keine Antwort'
+            button.btn.secondary(
+              class=job.answer ? 'active' : ''
+              type="submit"
+              aria-pressed=(job.answer ? 'true' : 'false')
+            )= job.answer ? 'Antwort erhalten ✓' : 'Keine Antwort'
 
   if msg
-    .card
+    .card(role="status" aria-live="polite")
       p.muted= msg
 
-  // Beschreibung / Notizen
+  // Beschreibung / Notizen (Markdown)
   if job && (job.description || job.note)
     .card
       if job.description
@@ -39,6 +48,9 @@ block content
         h2 Notizen
         .prose!= renderMarkdown(job.note)
 
+  // Rahmen & Vergütung – nur rendern, wenn mind. 1 Feld gesetzt ist
+  - const hasComp = job && (job.salary_min || job.salary_max || job.salary_target || job.salary_currency || job.salary_period || job.work_mode || job.remote_ratio != null || job.seniority || job.employment_type || job.contract_type || job.start_date || job.deadline_date || job.application_channel || job.source_url || job.referral != null)
+  if hasComp
     .card
       h2 Rahmen & Vergütung
       .meta-grid
@@ -46,7 +58,7 @@ block content
           .meta-item
             span.meta-label Gehaltsspanne
             span.meta-value
-              | #{job.salary_min ? job.salary_min.toLocaleString() : '—'} - #{job.salary_max ? job.salary_max.toLocaleString() : '—'} #{job.salary_currency || 'EUR'} / #{job.salary_period==='month' ? 'Monat' : 'Jahr'}
+              | #{job.salary_min ? job.salary_min.toLocaleString() : '—'} – #{job.salary_max ? job.salary_max.toLocaleString() : '—'} #{job.salary_currency || 'EUR'} / #{job.salary_period==='month' ? 'Monat' : 'Jahr'}
         if job.salary_target
           .meta-item
             span.meta-label Zielgehalt
@@ -54,7 +66,7 @@ block content
         if job.work_mode
           .meta-item
             span.meta-label Arbeitsmodus
-            span.meta-value #{job.work_mode}#{job.remote_ratio ? ` (${job.remote_ratio}% Remote)` : ''}
+            span.meta-value #{job.work_mode}#{job.remote_ratio != null ? ` (${job.remote_ratio}% Remote)` : ''}
         if job.seniority
           .meta-item
             span.meta-label Seniorität
@@ -82,14 +94,16 @@ block content
         if job.source_url
           .meta-item
             span.meta-label Ausschreibung
-            span.meta-value: a(href=job.source_url rel="noopener") Link
-        .meta-item
-          span.meta-label Referral
-          span.meta-value
-            if job.referral
-              span.badge.badge-ok Ja
-            else
-              span.badge.badge-no Nein
+            span.meta-value
+              a(href=job.source_url rel="noopener noreferrer") Link
+        if job.referral != null
+          .meta-item
+            span.meta-label Referral
+            span.meta-value
+              if job.referral
+                span.badge.badge-ok Ja
+              else
+                span.badge.badge-no Nein
 
   // Zwei Spalten: Unternehmen & Kontakt
   .row.row-2
@@ -106,7 +120,45 @@ block content
           .meta-item
             span.meta-label Website
             span.meta-value
-              a(href=site rel="noopener")= company.website
+              a(href=site rel="noopener noreferrer")= company.website
+        if company.linkedin_url
+          .meta-item
+            span.meta-label LinkedIn
+            span.meta-value
+              a(href=company.linkedin_url rel="noopener noreferrer") Profil
+        if company.glassdoor_url
+          .meta-item
+            span.meta-label Glassdoor
+            span.meta-value
+              a(href=company.glassdoor_url rel="noopener noreferrer") Profil
+        if company.stepstone_url
+          .meta-item
+            span.meta-label StepStone
+            span.meta-value
+              a(href=company.stepstone_url rel="noopener noreferrer") Profil
+        if company.hiring_page
+          .meta-item
+            span.meta-label Hiring-Page
+            span.meta-value
+              a(href=company.hiring_page rel="noopener noreferrer") Karriere
+        if company.industry
+          .meta-item
+            span.meta-label Branche
+            span.meta-value= company.industry
+        if company.size_range
+          .meta-item
+            span.meta-label Größe
+            span.meta-value= company.size_range
+        if company.career_email
+          .meta-item
+            span.meta-label Karriere-E-Mail
+            span.meta-value
+              a(href=`mailto:${company.career_email}`)= company.career_email
+        if company.phone
+          .meta-item
+            span.meta-label Telefon
+            span.meta-value
+              a(href=`tel:${company.phone}`)= company.phone
         if company.street
           .meta-item
             span.meta-label Straße
@@ -118,7 +170,7 @@ block content
       if company.note
         .stack-12
           h3 Notizen
-          p!= company.note
+          .prose!= renderMarkdown(company.note)
 
     .card
       h2 Kontakt
@@ -142,9 +194,9 @@ block content
       if contact.note
         .stack-12
           h3 Notizen
-          p!= contact.note
+          .prose!= renderMarkdown(contact.note)
 
-  // Footer-Karte mit Meta
+  // Meta/Fuß
   .card
     h2 Meta
     .meta-grid
@@ -154,7 +206,7 @@ block content
           span.meta-value= job._id
       if job && job.applied !== undefined
         .meta-item
-          span.meta-label Applied
+          span.meta-label Angeschrieben
           span.meta-value
             if job.applied
               span.badge.badge-ok Ja
@@ -162,7 +214,7 @@ block content
               span.badge.badge-no Nein
       if job && job.answer !== undefined
         .meta-item
-          span.meta-label Answer
+          span.meta-label Antwort
           span.meta-value
             if job.answer
               span.badge.badge-ok Ja
