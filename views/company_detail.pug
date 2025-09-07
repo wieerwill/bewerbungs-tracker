@@ -6,6 +6,10 @@ block content
       h1= company.name
       .buttons
         a.btn.secondary(href="/companies") Zur Übersicht
+        a.btn.warn(href=`/companies/${company._id}/edit`) Bearbeiten
+        form(method="POST", action=`/companies/${company._id}?_method=DELETE`, style="display:inline", onsubmit="return confirm('Unternehmen wirklich löschen? Diese Aktion entfernt auch alle Kontakte. Jobs bleiben erhalten, verlieren aber die Zuordnung.');")
+          input(type="hidden", name="_csrf", value=csrfToken)
+          button.btn.danger(type="submit" aria-label=`${company.name} löschen`) Löschen
 
   .row.row-2
     .card

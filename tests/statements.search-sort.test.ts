@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { makeTestDb, mkCompany, mkJob } from './util';
 
-describe('statements – search/filter/sort', () => {
+describe('statements - search/filter/sort', () => {
   it('searches across job title/description/company/contact names', () => {
     const { s } = makeTestDb();
     s.insertCompany(

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { renderMarkdown } from '../src/markdown';
 
-describe('markdown – sanitization', () => {
+describe('markdown - sanitization', () => {
   it('renders links with rel=noopener and strips scripts', () => {
     const html = renderMarkdown(
       '[x](https://example.com)<script>alert(1)</script>',

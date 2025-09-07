@@ -8,7 +8,7 @@ import {
 } from '../src/helpers';
 import type { JobJoinedRow } from '../src/types';
 
-describe('helpers – mapping & formatting', () => {
+describe('helpers - mapping & formatting', () => {
   it('requestToCompany fills optional fields with empty/undefined gracefully', () => {
     const comp = requestToCompany({ companyName: 'ACME' });
     expect(comp.name).toBe('ACME');

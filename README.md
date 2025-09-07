@@ -1,6 +1,6 @@
 # Bewerbungs-Tracker (local, offline)
 
-Ein schlanker, lokal laufender Tracker für Bewerbungen – ideal, um Jobs, Unternehmen und Kontakte **ohne Server** zu verwalten.
+Ein schlanker, lokal laufender Tracker für Bewerbungen - ideal, um Jobs, Unternehmen und Kontakte **ohne Server** zu verwalten.
 Modernes UI, sichere lokale DB, komfortable Formulare, Markdown-Notizen und sinnvolle Felder (Gehalt, Work-Mode, Seniorität u.v.m.).
 
 ## Features
@@ -8,11 +8,11 @@ Modernes UI, sichere lokale DB, komfortable Formulare, Markdown-Notizen und sinn
 - **Jobs verwalten**
   - Neu anlegen, bearbeiten, löschen
   - Status-Toggles: _angeschrieben_ / _Antwort erhalten_
-  - Zuordnung **genau eines** Unternehmens & **optional eines** Kontakts
+  - Zuordnung genau eines Unternehmens & optional eines Kontakts
   - Gehaltsspanne (von/bis), Zielgehalt, Währung/Zeitraum
   - Meta: Work-Mode (onsite/hybrid/remote), Remote-Anteil, Seniorität, Anstellungs- & Vertragsart
   - Startdatum, Frist, Quelle/Link, Bewerbungs-Kanal, Referral
-  - Beschreibung & Notizen als **Markdown**
+  - Beschreibung & Notizen als Markdown
 
 - **Unternehmen & Kontakte**
   - Unternehmen separat anlegen
@@ -21,12 +21,12 @@ Modernes UI, sichere lokale DB, komfortable Formulare, Markdown-Notizen und sinn
 
 - **UI/UX**
   - Saubere Tabellen, Karten, Badges, moderne Buttons
-  - Startseite mit **Suche / Filter / Sortierung**
+  - Startseite mit Suche / Filter / Sortierung
   - Markdown-Rendering
 
 - **Technik**
-  - **TypeScript**
-  - **SQLite** Datei-DB, keine Server, keine Migration nötig
+  - TypeScript
+  - SQLite Datei-DB, keine Server, keine Migration nötig
   - Express + Pug, `better-sqlite3`, `morgan`
 
 ## Projektstruktur
@@ -65,20 +65,18 @@ Keine zusätzliche Konfiguration nötig. Die SQLite-Datei wird automatisch unter
 
 ## Wichtige Routen (Auszug)
 
-- `GET /` – Übersicht (Suche/Filter/Sort)
-- `GET /new` – neuen Job anlegen (mit Company/Contact-Dropdown)
-- `POST /new` – Job speichern
-- `GET /detail/:id` – Job-Details
-- `GET /edit/:id` – Job bearbeiten (mit vorausgewählter Company/Contact)
-- `POST /edit/:id` – Job aktualisieren
-- `GET /toggle/:id/:field` – applied/answer toggeln
-- `GET /delete/:id` – Job löschen
-- `GET /companies` – Unternehmen Übersicht
-- `GET /companies/new` – neues Unternehmen anlegen (+ optional erster Kontakt)
-- `POST /companies/new` – Unternehmen speichern
-- `GET /companies/:id` – Unternehmens-Detail (inkl. Kontakte)
-
-> Hinweis: Für lokale Einfachheit sind einige „mutierende“ Aktionen als `GET` gehalten. In einer gehärteten Variante sollten diese als `POST/DELETE` mit CSRF-Schutz umgesetzt werden (siehe Roadmap).
+- `GET /` - Übersicht (Suche/Filter/Sort)
+- `GET /new` - neuen Job anlegen (mit Company/Contact-Dropdown)
+- `POST /new` - Job speichern
+- `GET /detail/:id` - Job-Details
+- `GET /edit/:id` - Job bearbeiten (mit vorausgewählter Company/Contact)
+- `POST /edit/:id` - Job aktualisieren
+- `GET /toggle/:id/:field` - applied/answer toggeln
+- `GET /delete/:id` - Job löschen
+- `GET /companies` - Unternehmen Übersicht
+- `GET /companies/new` - neues Unternehmen anlegen (+ optional erster Kontakt)
+- `POST /companies/new` - Unternehmen speichern
+- `GET /companies/:id` - Unternehmens-Detail (inkl. Kontakte)
 
 ## Konfiguration
 
@@ -86,7 +84,7 @@ Standardwerte:
 
 - Host: `127.0.0.1`
 - Port: `8080`
-  → per `PORT`/`IP` überschreibbar (`pnpm start` liest Env Vars).
+  -> per `PORT`/`IP` überschreibbar (`pnpm start` liest Env Vars).
 
 ## Contribution Guide
 
@@ -103,8 +101,8 @@ Beiträge sind willkommen! Vorschlag:
 
 Coding-Hinweise:
 
-- Datenfluss: `routes` → `statements`/`helpers` (keine SQL in Routen)
-- Validierung serverseitig (z. B. `zod`) – optional, aber gern gesehen
+- Datenfluss: `routes` -> `statements`/`helpers` (keine SQL in Routen)
+- Validierung serverseitig (z. B. `zod`) - optional, aber gern gesehen
 - Markdown nur über `renderMarkdown` in Views ausgeben
 
 ## Roadmap
@@ -134,7 +132,7 @@ Coding-Hinweise:
 
 - [ ] mehr Tests (Unit mit Vitest, E2E leichtgewichtig)
 - [ ] Backup/Restore der `jobs.db` (z. B. ZIP-Download)
-- [ ] Datei-Anhänge (z. B. PDF CV, Anschreiben) – lokal unter `/uploads`
+- [ ] Datei-Anhänge (z. B. PDF CV, Anschreiben) - lokal unter `/uploads`
 - [ ] Aktivitäten/Timeline pro Job (Follow-ups, Termine)
 - [ ] i18n (Deutsch/Englisch Umschaltbar)
 - [ ] Barrierefreiheit (A11y-Audit, ARIA Feinheiten)
@@ -143,15 +141,15 @@ Coding-Hinweise:
 ## FAQ
 
 **Warum SQLite?**
-Robust, transaktionssicher, **eine Datei**, kein externer Server. Perfekt fürs private Hosting/offline.
+Robust, transaktionssicher, eine Datei, kein externer Server. Perfekt fürs private Hosting/offline.
 
 **Warum Pug statt React?**
 Schnell, leichtgewichtig, keine Build-Komplexität im Frontend nötig.
 
 **Kann ich eigene Farben/Branding setzen?**
-Ja – die Design-Tokens (CSS Variablen) stehen am Anfang von `public/styles/main.css`.
+Ja - die Design-Tokens (CSS Variablen) stehen am Anfang von `public/styles/main.css`.
 
 ---
 
 Viel Spaß beim Bewerbungen-Organisieren! 🎯
-Wenn etwas holpert: Issue aufmachen – wir verbessern das in kleinen Iterationen.
+Wenn etwas holpert: Issue aufmachen - wir verbessern das in kleinen Iterationen.

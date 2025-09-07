@@ -206,4 +206,72 @@ export default function registerRoutes(app: Express, s: Statements) {
     const contacts = s.listContactsForCompany(company._id).map(contactRowToVm);
     res.render('company_detail', { company, contacts, renderMarkdown });
   });
+
+  app.post('/companies/:id', (req, res) => {
+    const orig = s.getCompanyById(String(req.params.id));
+    if (!orig) return res.redirect('/companies');
+    const next = requestToCompany(req.body, companyRowToVm(orig) as any);
+    next.id = orig.id; // safety
+    try {
+      s.updateCompany(next);
+    } catch {
+      return res.redirect(
+        `/companies/${orig.id}/edit?msg=` +
+          encodeURIComponent('Name bereits vergeben'),
+      );
+    }
+    res.redirect(`/companies/${orig.id}`);
+  });
+
+  app.get('/companies/:id/edit', (req, res) => {
+    const row = s.getCompanyById(String(req.params.id));
+    if (!row) return res.redirect('/companies');
+    const company = companyRowToVm(row);
+    const contacts = s.listContactsForCompany(company._id).map(contactRowToVm);
+    res.render('company_edit', { company, contacts, renderMarkdown });
+  });
+
+  app.post('/companies/:id/contacts', (req, res) => {
+    const companyId = String(req.params.id);
+    if (!s.getCompanyById(companyId)) return res.redirect('/companies');
+    s.insertContact(requestToContact(req.body, companyId));
+    res.redirect(`/companies/${companyId}/edit`);
+  });
+
+  app.post('/companies/:id/contacts/:contactId', (req, res) => {
+    const companyId = String(req.params.id);
+    const contactId = String(req.params.contactId);
+    if (!s.getCompanyById(companyId)) return res.redirect('/companies');
+    s.updateContact({
+      id: contactId,
+      company_id: companyId,
+      name: (req.body.contactName || '').trim(),
+      email: (req.body.contactEmail || '').trim(),
+      phone: (req.body.contactPhone || '').trim(),
+      note: (req.body.contactNote || '').trim(),
+    } as any);
+    res.redirect(`/companies/${companyId}/edit`);
+  });
+
+  app.delete('/companies/:id/contacts/:contactId', (req, res) => {
+    s.deleteContact(String(req.params.contactId));
+    res.redirect(`/companies/${String(req.params.id)}/edit`);
+  });
+
+  app.delete('/companies/:id', (req, res) => {
+    const id = String(req.params.id);
+    const row = s.getCompanyById(id);
+    if (!row)
+      return res.redirect(
+        '/companies?msg=' + encodeURIComponent('Unternehmen nicht gefunden'),
+      );
+
+    // Hinweis: Kontakte werden per ON DELETE CASCADE entfernt,
+    // Jobs behalten wir, deren company_id wird auf NULL gesetzt.
+    s.deleteCompany(id);
+
+    res.redirect(
+      '/companies?msg=' + encodeURIComponent('Unternehmen gelöscht'),
+    );
+  });
 }

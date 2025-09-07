@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { makeTestDb, mkCompany, mkJob } from './util';
 
-describe('statements – remaining edges', () => {
+describe('statements - remaining edges', () => {
   it('updateCompany with many nullables does not throw', () => {
     const { s } = makeTestDb();
     const c = mkCompany({

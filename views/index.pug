@@ -24,8 +24,8 @@ block content
           label(for="sort") Sortieren
           select#sort(name="sort")
             option(value="" selected=(!sort)) Neueste zuerst
-            option(value="title" selected=(sort==='title')) Titel A–Z
-            option(value="company" selected=(sort==='company')) Firma A–Z
+            option(value="title" selected=(sort==='title')) Titel A-Z
+            option(value="company" selected=(sort==='company')) Firma A-Z
       .form-actions.buttons
         button.btn(type="submit") Anwenden
         a.btn.secondary(href="/") Zurücksetzen
@@ -36,7 +36,7 @@ block content
 
   if jobs && jobs.length
     table.table(aria-describedby="jobs-help")
-      caption Bewerbungen – Übersicht
+      caption Bewerbungen - Übersicht
       thead
         tr
           th.scope(scope="col") #
@@ -65,7 +65,6 @@ block content
                   input(type="hidden", name="_csrf", value=csrfToken)
                   button.btn.danger(type="submit") Löschen
                 button.btn.secondary.js-copy-job(type="button", data-jobid=job._id aria-label=`Job kopieren: ${job.title}`) Kopieren
-    p#jobs-help.muted Nutze Tabulator zur Navigation; Aktionen befinden sich in der letzten Spalte jeder Zeile.
 
   else
     .card.center.max-w-sm

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { makeTestDb, mkJob } from './util';
 
-describe('jobs – edge cases', () => {
+describe('jobs - edge cases', () => {
   it('allows missing salary fields (nullable) without throwing', () => {
     const { s } = makeTestDb();
     s.insertJob(

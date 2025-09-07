@@ -46,7 +46,7 @@ block content
           .meta-item
             span.meta-label Gehaltsspanne
             span.meta-value
-              | #{job.salary_min ? job.salary_min.toLocaleString() : '—'} – #{job.salary_max ? job.salary_max.toLocaleString() : '—'} #{job.salary_currency || 'EUR'} / #{job.salary_period==='month' ? 'Monat' : 'Jahr'}
+              | #{job.salary_min ? job.salary_min.toLocaleString() : '—'} - #{job.salary_max ? job.salary_max.toLocaleString() : '—'} #{job.salary_currency || 'EUR'} / #{job.salary_period==='month' ? 'Monat' : 'Jahr'}
         if job.salary_target
           .meta-item
             span.meta-label Zielgehalt

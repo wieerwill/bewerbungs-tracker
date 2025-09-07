@@ -7,6 +7,8 @@ import type {
   ListJobsParams,
 } from './types';
 
+const nfix = (x: any) => (Number.isFinite(x) ? x : null);
+
 function normalizeCompany(row: Partial<Company>): Company {
   return {
     id: row.id!, // required
@@ -40,10 +42,10 @@ function normalizeJob(row: Partial<JobRecord>): JobRecord {
     company_id: row.company_id ?? null,
     contact_id: row.contact_id ?? null,
 
-    salary_min: row.salary_min ?? null,
-    salary_max: row.salary_max ?? null,
-    salary_target: row.salary_target ?? null,
-    salary_currency: row.salary_currency ?? null,
+    salary_min: nfix(row.salary_min),
+    salary_max: nfix(row.salary_max),
+    salary_target: nfix(row.salary_target),
+    salary_currency: nfix(row.salary_currency),
     salary_period: (row.salary_period ?? null) as any,
 
     work_mode: (row.work_mode ?? null) as any,
@@ -110,6 +112,12 @@ export default function createStatements(db: SqliteDatabase) {
   const stmtInsertContact = db.prepare(
     `INSERT INTO contacts (id,company_id,name,email,phone,note) VALUES (@id,@company_id,@name,@email,@phone,@note)`,
   );
+  const stmtUpdateContact = db.prepare(`
+  UPDATE contacts SET
+    name=@name, email=@email, phone=@phone, note=@note,
+    updated_at=datetime('now')
+  WHERE id=@id AND company_id=@company_id
+`);
   const stmtDeleteContactById = db.prepare(`DELETE FROM contacts WHERE id = ?`);
   const stmtGetContactById = db.prepare(`SELECT * FROM contacts WHERE id = ?`);
   const stmtListContactsForCompany = db.prepare(
@@ -227,6 +235,9 @@ export default function createStatements(db: SqliteDatabase) {
   function insertContact(row: Contact) {
     return stmtInsertContact.run(normalizeContact(row));
   }
+  function updateContact(row: Contact) {
+    return stmtUpdateContact.run(normalizeContact(row));
+  }
   function deleteContact(id: string) {
     return stmtDeleteContactById.run(id);
   }
@@ -261,6 +272,7 @@ export default function createStatements(db: SqliteDatabase) {
     listCompanies,
     // contacts
     insertContact,
+    updateContact,
     deleteContact,
     getContactById,
     listContactsForCompany,

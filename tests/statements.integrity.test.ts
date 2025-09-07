@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { makeTestDb, mkCompany, mkContact, mkJob } from './util';
 
-describe('statements – integrity & cascades', () => {
+describe('statements - integrity & cascades', () => {
   it('enforces unique company name (case-insensitive) and can update', () => {
     const { s } = makeTestDb();
     const c1 = mkCompany({ id: 'c1', name: 'Acme' });

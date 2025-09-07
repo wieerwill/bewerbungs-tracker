@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { makeTestDb } from './util';
+import { requestToJob } from '../src/helpers';
 
 describe('statements - jobs', () => {
   it('creates job without company/contact', () => {
@@ -81,5 +82,17 @@ describe('statements - jobs', () => {
 
     const sorted = s.listJobs({ sort: 'company' });
     expect(sorted[0].company_name! <= sorted[1].company_name!).toBe(true);
+  });
+
+  it('turns empty/invalid numbers into null (no NaN)', () => {
+    const r = requestToJob({
+      jobTitle: 'X',
+      salaryMin: '',
+      salaryMax: 'abc',
+      remoteRatio: ' ',
+    });
+    expect(r.salary_min).toBeNull();
+    expect(r.salary_max).toBeNull();
+    expect(r.remote_ratio).toBeNull();
   });
 });

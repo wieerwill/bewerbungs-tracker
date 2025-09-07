@@ -1,0 +1,133 @@
+extends layout
+
+block content
+  .card
+    .card-header
+      h1 Unternehmen bearbeiten
+      if company && company.name
+        p.muted #{company.name}
+
+  if msg
+    .card
+      p.muted= msg
+
+  // Company Form
+  .card
+    form(action=`/companies/${company._id}`, method="POST")
+      input(type="hidden", name="_csrf", value=csrfToken)
+      fieldset.form-section
+        legend Stammdaten
+        .row.row-2
+          .field
+            label(for="companyName") Name *
+            input#companyName(type="text", name="companyName", required value=company.name)
+          .field
+            label(for="companyWebsite") Website
+            input#companyWebsite(type="url", name="companyWebsite", value=company.website)
+        .row.row-2
+          .field
+            label(for="companyStreet") Straße
+            input#companyStreet(type="text", name="companyStreet", value=company.street)
+          .field
+            label(for="companyCity") Stadt
+            input#companyCity(type="text", name="companyCity", value=company.city)
+        .row.row-2
+          .field
+            label(for="companyLinkedIn") LinkedIn
+            input#companyLinkedIn(type="url", name="companyLinkedIn", value=company.linkedin_url)
+          .field
+            label(for="companyGlassdoor") Glassdoor
+            input#companyGlassdoor(type="url", name="companyGlassdoor", value=company.glassdoor_url)
+        .row.row-2
+          .field
+            label(for="companyStepstone") StepStone
+            input#companyStepstone(type="url", name="companyStepstone", value=company.stepstone_url)
+          .field
+            label(for="companyHiringPage") Hiring-Page
+            input#companyHiringPage(type="url", name="companyHiringPage", value=company.hiring_page)
+        .row.row-2
+          .field
+            label(for="companyIndustry") Branche
+            input#companyIndustry(type="text", name="companyIndustry", value=company.industry)
+          .field
+            label(for="companySizeRange") Größe
+            input#companySizeRange(type="text", name="companySizeRange", value=company.size_range)
+        .row.row-2
+          .field
+            label(for="companyCareerEmail") Karriere-E-Mail
+            input#companyCareerEmail(type="email", name="companyCareerEmail", value=company.career_email)
+          .field
+            label(for="companyPhone") Telefon
+            input#companyPhone(type="tel", name="companyPhone", value=company.phone)
+        .field
+          label(for="companyNote") Notizen (Markdown)
+          textarea#companyNote(name="companyNote", rows="3")= company.note || ''
+        .field
+          label(for="companyOtherLinksJson") Weitere Links (JSON)
+          textarea#companyOtherLinksJson(name="companyOtherLinksJson", rows="3")= company.other_links_json || ''
+      .form-actions.buttons
+        button.btn(type="submit") Speichern
+        a.btn.secondary(href=`/companies/${company._id}`) Abbrechen
+
+  // Contacts Management
+  .card
+    .card-header
+      h2 Mitarbeiter / Kontakte
+    if contacts && contacts.length
+      table.table
+        thead
+          tr
+            th Name
+            th E-Mail
+            th Telefon
+            th Notizen
+            th Aktionen
+        tbody
+          each ct in contacts
+            tr
+              td
+                form(method="POST", action=`/companies/${company._id}/contacts/${ct._id}`)
+                  input(type="hidden", name="_csrf", value=csrfToken)
+                  input(type="text", name="contactName", value=ct.name, placeholder="Name")
+              td
+                form(method="POST", action=`/companies/${company._id}/contacts/${ct._id}`)
+                  input(type="hidden", name="_csrf", value=csrfToken)
+                  input(type="email", name="contactEmail", value=ct.email, placeholder="E-Mail")
+              td
+                form(method="POST", action=`/companies/${company._id}/contacts/${ct._id}`)
+                  input(type="hidden", name="_csrf", value=csrfToken)
+                  input(type="tel", name="contactPhone", value=ct.phone, placeholder="Telefon")
+              td
+                form(method="POST", action=`/companies/${company._id}/contacts/${ct._id}`)
+                  input(type="hidden", name="_csrf", value=csrfToken)
+                  textarea(name="contactNote", rows="2", placeholder="Notiz")= ct.note || ''
+              td
+                .buttons
+                  button.btn.small(type="submit" formmethod="post" formaction=`/companies/${company._id}/contacts/${ct._id}`) Speichern
+                  form(method="POST", action=`/companies/${company._id}/contacts/${ct._id}?_method=DELETE`, style="display:inline")
+                    input(type="hidden", name="_csrf", value=csrfToken)
+                    button.btn.danger.small(type="submit") Löschen
+    else
+      p.muted Keine Kontakte vorhanden.
+
+    // Add Contact
+    form(method="POST", action=`/companies/${company._id}/contacts`)
+      input(type="hidden", name="_csrf", value=csrfToken)
+      fieldset.form-section
+        legend Kontakt hinzufügen
+        .row.row-3
+          .field
+            label(for="newContactName") Name
+            input#newContactName(type="text", name="contactName", placeholder="z. B. Max Mustermann")
+          .field
+            label(for="newContactEmail") E-Mail
+            input#newContactEmail(type="email", name="contactEmail", placeholder="max@firma.de")
+          .field
+            label(for="newContactPhone") Telefon
+            input#newContactPhone(type="tel", name="contactPhone", placeholder="+49 …")
+        .field
+          label(for="newContactNote") Notiz
+          textarea#newContactNote(name="contactNote", rows="2")
+      .form-actions.buttons
+        button.btn(type="submit") Kontakt hinzufügen
+        a.btn.secondary(href=`/companies/${company._id}`) Zur Detailansicht

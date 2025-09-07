@@ -9,12 +9,24 @@ import type {
 
 const get = (x: unknown): string =>
   typeof x === 'string' ? x.trim() : (x as string) || '';
-
-function toNum(x: string): number | null {
-  const n = Number(x);
+const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
+const numOrNull = (v: unknown) => {
+  if (v === null || v === undefined) return null;
+  const s = typeof v === 'string' ? v.trim() : v;
+  if (s === '') return null;
+  const n = Number(s);
   return Number.isFinite(n) ? n : null;
-}
-
+};
+const idOrNull = (v: unknown) => {
+  const t = str(v);
+  return t ? t : null; // leere Option -> null (für FK)
+};
+const bool01 = (v: unknown) => {
+  // akzeptiert Checkbox "on", "1", true/false
+  if (v === true || v === 'on' || v === '1' || v === 1) return 1 as const;
+  if (v === false || v === '0' || v === 0) return 0 as const;
+  return 0 as const;
+};
 function safeJson(s: string): string | undefined {
   if (!s) return undefined;
   try {
@@ -64,36 +76,58 @@ export function requestToContact(
 }
 
 export function requestToJob(
-  body: Record<string, unknown>,
-  current?: JobViewModel,
+  body: any,
+  current?: Partial<JobViewModel>,
 ): JobRecord {
   return {
-    id: current ? current._id : uuidv4(),
-    title: get(body.jobTitle),
-    description: get(body.jobDescription),
-    note: get(body.jobNote),
-    applied: current ? (current.applied ? 1 : 0) : 0,
-    answer: current ? (current.answer ? 1 : 0) : 0,
-    company_id: get(body.companyId) || (current?.company_id ?? null),
-    contact_id: get(body.contactId) || (current?.contact_id ?? null),
+    id: current?.id ?? (body.id && str(body.id)) ?? uuidv4(),
+    title: str(body.jobTitle),
+    description: str(body.jobDescription) || null,
+    note: str(body.jobNote) || null,
 
-    salary_min: toNum(get(body.salaryMin)),
-    salary_max: toNum(get(body.salaryMax)),
-    salary_target: toNum(get(body.salaryTarget)),
-    salary_currency: get(body.salaryCurrency) || 'EUR',
-    salary_period: (get(body.salaryPeriod) as any) || 'year',
+    // Flags: aus Formular oder Current
+    applied:
+      body.applied !== undefined
+        ? bool01(body.applied)
+        : current?.applied
+          ? 1
+          : 0,
+    answer:
+      body.answer !== undefined ? bool01(body.answer) : current?.answer ? 1 : 0,
 
-    work_mode: (get(body.workMode) as any) || null,
-    remote_ratio: toNum(get(body.remoteRatio)),
-    seniority: (get(body.seniority) as any) || null,
-    employment_type: (get(body.employmentType) as any) || null,
-    contract_type: (get(body.contractType) as any) || null,
+    // Zuordnung
+    company_id:
+      idOrNull(body.companyId) ??
+      (current?.company && current.company._id ? current.company._id : null),
+    contact_id:
+      idOrNull(body.contactId) ??
+      (current?.contact && (current as any).contact._id
+        ? (current as any).contact._id
+        : null),
 
-    start_date: get(body.startDate) || null,
-    deadline_date: get(body.deadlineDate) || null,
-    source_url: get(body.jobSource) || null,
-    application_channel: get(body.applicationChannel) || null,
-    referral: get(body.referral) ? 1 : 0,
+    // Gehalt & Meta - NaN->null
+    salary_min: numOrNull(body.salaryMin),
+    salary_max: numOrNull(body.salaryMax),
+    salary_target: numOrNull(body.salaryTarget),
+    salary_currency: str(body.salaryCurrency) || null,
+    salary_period: str(body.salaryPeriod) || null, // "year" | "month" | null
+
+    work_mode: str(body.workMode) || null,
+    remote_ratio: numOrNull(body.remoteRatio),
+    seniority: str(body.seniority) || null,
+    employment_type: str(body.employmentType) || null,
+    contract_type: str(body.contractType) || null,
+
+    start_date: str(body.startDate) || null,
+    deadline_date: str(body.deadlineDate) || null,
+    source_url: str(body.jobSource) || null,
+    application_channel: str(body.applicationChannel) || null,
+    referral:
+      body.referral !== undefined
+        ? bool01(body.referral)
+        : current?.referral
+          ? 1
+          : 0,
   };
 }
 
@@ -182,7 +216,7 @@ export function formatJobForClipboard(j: JobJoinedRow): string {
 
   lines.push('', '## Rahmen & Vergütung');
   lines.push(
-    `- Spanne: ${money((j as any).salary_min, (j as any).salary_currency, (j as any).salary_period)} – ${money((j as any).salary_max, (j as any).salary_currency, (j as any).salary_period)}`,
+    `- Spanne: ${money((j as any).salary_min, (j as any).salary_currency, (j as any).salary_period)} - ${money((j as any).salary_max, (j as any).salary_currency, (j as any).salary_period)}`,
   );
   lines.push(
     `- Ziel: ${money((j as any).salary_target, (j as any).salary_currency, (j as any).salary_period)}`,

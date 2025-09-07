@@ -54,7 +54,7 @@ block content
               option(value="" disabled hidden selected=!(job && job.company_id)) — Unternehmen wählen —
               each c in companies
                 option(value=c.id selected=(job && job.company_id === c.id))= c.name
-            .help Unternehmen kann hier nicht neu angelegt werden – bitte unter „Unternehmen“.
+            .help Unternehmen kann hier nicht neu angelegt werden - bitte unter „Unternehmen“.
           .field
             label(for="contactId") Kontaktperson (optional)
             //- initial leer; wird durch Script befüllt & auf bestehende Auswahl gesetzt

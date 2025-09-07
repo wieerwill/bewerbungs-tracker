@@ -1,7 +1,7 @@
 {
   "name": "Bewerbungs-Tracker",
   "short_name": "Bewerbungen",
-  "description": "Lokaler Bewerbungs-Tracker: Jobs, Unternehmen und Kontakte verwalten – offline-freundlich, ohne Server.",
+  "description": "Lokaler Bewerbungs-Tracker: Jobs, Unternehmen und Kontakte verwalten - offline-freundlich, ohne Server.",
   "lang": "de-DE",
   "dir": "ltr",
 
@@ -64,15 +64,21 @@
   "screenshots": [
     {
       "src": "/screenshots/jobs-list.png",
-      "sizes": "1280x720",
+      "sizes": "1080x819",
       "type": "image/png",
-      "label": "Jobs – Übersicht"
+      "label": "Jobs - Übersicht"
     },
     {
       "src": "/screenshots/job-detail.png",
-      "sizes": "1280x720",
+      "sizes": "1080x819",
       "type": "image/png",
-      "label": "Job – Detail"
+      "label": "Job - Detail"
+    },
+    {
+      "src": "/screenshots/company-list.png",
+      "sizes": "1080x819",
+      "type": "image/png",
+      "label": "Company - Übersicht"
     }
   ],
 

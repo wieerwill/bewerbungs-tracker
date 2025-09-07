@@ -12,7 +12,6 @@ block content
   .card
     form(action="/companies", method="POST")
       input(type="hidden", name="_csrf", value=csrfToken)
-    form(action="/companies/new", method="POST")
       fieldset.form-section
         legend Abschnitt: Unternehmen
         .row.row-2
@@ -48,7 +47,7 @@ block content
             input#company-industry(type="text", name="companyIndustry", placeholder="z. B. Medizintechnik")
           .field
             label(for="company-size") Größe
-            input#company-size(type="text", name="companySizeRange", placeholder="z. B. 200–500")
+            input#company-size(type="text", name="companySizeRange", placeholder="z. B. 200-500")
         .row.row-2
           .field
             label(for="company-career-email") Karriere-E-Mail
