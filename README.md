@@ -129,6 +129,7 @@ Coding-Hinweise:
 - [ ] Sortierbare Spaltenköpfe (Client)
 - [ ] Prüfung: `contactId` gehört zur `companyId` beim Speichern
 - [ ] Import (JSON/CSV) von Jobs/Companies
+- [ ] Screenshots
 
 - [ ] Tests (Unit mit Vitest, E2E leichtgewichtig)
 - [ ] Backup/Restore der `jobs.db` (z. B. ZIP-Download)
