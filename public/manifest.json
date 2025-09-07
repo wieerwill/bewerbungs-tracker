@@ -69,10 +69,10 @@
       "label": "Jobs - Übersicht"
     },
     {
-      "src": "/screenshots/job-detail.png",
+      "src": "/screenshots/job-new.png",
       "sizes": "1080x819",
       "type": "image/png",
-      "label": "Job - Detail"
+      "label": "Job - Neu"
     },
     {
       "src": "/screenshots/company-list.png",
