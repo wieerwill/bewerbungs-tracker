@@ -1,4 +1,4 @@
-import { load } from 'cheerio';
+import { load, type CheerioAPI } from 'cheerio';
 import { fetch } from 'undici';
 import type { Company } from '../types';
 
@@ -31,22 +31,22 @@ type ParsedCompany = Pick<
 const txt = (s?: string | null) => (s ? s.trim() : null);
 const norm = (s?: string | null) => (s ? s.replace(/\s+/g, ' ').trim() : null);
 
-function textOf($: cheerio.CheerioAPI, selector: string) {
+function textOf($: CheerioAPI, selector: string) {
   const t = $(selector).first().text();
   return norm(t) ?? null;
 }
 
-function firstLinkHref($: cheerio.CheerioAPI, selector: string) {
+function firstLinkHref($: CheerioAPI, selector: string) {
   const href = $(selector).first().attr('href');
   return href ? href.trim() : null;
 }
 
-function findFirstH1($: cheerio.CheerioAPI): string | null {
+function findFirstH1($: CheerioAPI): string | null {
   const t = $('h1').first().text();
   return norm(t) ?? null;
 }
 
-function findWebsite($: cheerio.CheerioAPI): string | null {
+function findWebsite($: CheerioAPI): string | null {
   // bevorzugt data-test="employer-website"
   const hrefTest = firstLinkHref($, 'a[data-test="employer-website"]');
   if (hrefTest) return hrefTest;
@@ -60,7 +60,7 @@ function findWebsite($: cheerio.CheerioAPI): string | null {
   return null;
 }
 
-function findOverviewListItems($: cheerio.CheerioAPI): string[] {
+function findOverviewListItems($: CheerioAPI): string[] {
   // Auf der Seite befindet sich eine UL mit Unternehmensdetails.
   // Wir werten ALLE <li> global aus und matchen per Inhalt.
   return $('li')
@@ -113,7 +113,7 @@ function extractFromDetails(items: string[]) {
   return out;
 }
 
-function findDescription($: cheerio.CheerioAPI): string | null {
+function findDescription($: CheerioAPI): string | null {
   // bevorzugt data-test="employerDescription"
   const t = textOf($, '[data-test="employerDescription"]');
   if (t) return t;
@@ -127,7 +127,7 @@ function findDescription($: cheerio.CheerioAPI): string | null {
   return null;
 }
 
-function extractRatings($: cheerio.CheerioAPI) {
+function extractRatings($: CheerioAPI) {
   const rating =
     textOf(
       $,
@@ -157,7 +157,7 @@ export function parseGlassdoorHtml(
   html: string,
   sourceUrl?: string,
 ): ParsedCompany {
-  const $ = load(html, { decodeEntities: true });
+  const $ = load(html);
 
   const name =
     findFirstH1($) ??

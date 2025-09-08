@@ -328,3 +328,157 @@ export function companiesToCsv(rows: Company[]): string {
   // BOM für Excel-Kompatibilität beibehalten
   return '\uFEFF' + out.join('\n');
 }
+
+// --- CSV Import: robustes Parsen (immer-quotierte Felder, Quotes als "") ---
+function parseCsv(text: string): string[][] {
+  // BOM entfernen
+  let i = 0;
+  if (text.charCodeAt(0) === 0xfeff) i = 1;
+
+  const rows: string[][] = [];
+  let field = '';
+  let row: string[] = [];
+  let inQuotes = false;
+
+  for (; i < text.length; i++) {
+    const ch = text[i];
+
+    if (inQuotes) {
+      if (ch === '"') {
+        // Doppelte Quotes -> Escaped Quote
+        if (text[i + 1] === '"') {
+          field += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        field += ch;
+      }
+    } else {
+      if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === ',') {
+        row.push(field);
+        field = '';
+      } else if (ch === '\n') {
+        row.push(field);
+        rows.push(row);
+        row = [];
+        field = '';
+      } else if (ch === '\r') {
+        // ignoriere \r (Windows-Zeilenende)
+      } else {
+        field += ch;
+      }
+    }
+  }
+  // letztes Feld/Zeile
+  row.push(field);
+  rows.push(row);
+  // leere Abschlusszeile entfernen
+  if (rows.length && rows[rows.length - 1].every((c) => c === '')) rows.pop();
+  return rows;
+}
+
+export type ImportedCompanyRow = {
+  id?: string | null;
+  name: string;
+  website?: string | null;
+  city?: string | null;
+  linkedin_url?: string | null;
+  glassdoor_url?: string | null;
+  stepstone_url?: string | null;
+  size_range?: string | null;
+  // tolerant für zusätzliche Spalten (werden in Notiz eingehängt)
+  _extraNote?: string | null;
+};
+
+// akzeptiert Header mit oder ohne "id", sowie "linkedin"|"linkedin_url" usw.
+export function parseCompaniesCsv(csv: string): ImportedCompanyRow[] {
+  const rows = parseCsv(csv);
+  if (!rows.length) return [];
+  const header = rows[0].map((h) => h.trim().toLowerCase());
+
+  const idx = (name: string, alt?: string[]) => {
+    const i = header.indexOf(name);
+    if (i !== -1) return i;
+    if (alt) {
+      for (const a of alt) {
+        const j = header.indexOf(a);
+        if (j !== -1) return j;
+      }
+    }
+    return -1;
+  };
+
+  const cId = idx('id');
+  const cName = idx('name');
+  const cWebsite = idx('website');
+  const cCity = idx('city');
+  const cLinkedIn = idx('linkedin', ['linkedin_url']);
+  const cGlassdoor = idx('glassdoor', ['glassdoor_url']);
+  const cStepstone = idx('stepstone', ['stepstone_url']);
+  const cSize = idx('size_range', ['size']);
+
+  const out: ImportedCompanyRow[] = [];
+
+  for (let r = 1; r < rows.length; r++) {
+    const line = rows[r];
+    const get = (i: number) =>
+      i >= 0 && i < line.length ? line[i].trim() : '';
+
+    const name = get(cName);
+    if (!name) continue;
+
+    const row: ImportedCompanyRow = {
+      id: cId >= 0 ? get(cId) || null : null,
+      name,
+      website: cWebsite >= 0 ? get(cWebsite) || null : null,
+      city: cCity >= 0 ? get(cCity) || null : null,
+      linkedin_url: cLinkedIn >= 0 ? get(cLinkedIn) || null : null,
+      glassdoor_url: cGlassdoor >= 0 ? get(cGlassdoor) || null : null,
+      stepstone_url: cStepstone >= 0 ? get(cStepstone) || null : null,
+      size_range: cSize >= 0 ? get(cSize) || null : null,
+    };
+
+    // Sammle alle nicht gemappten Spalten als Text für Notizen
+    const known = new Set(
+      [
+        cId,
+        cName,
+        cWebsite,
+        cCity,
+        cLinkedIn,
+        cGlassdoor,
+        cStepstone,
+        cSize,
+      ].filter((x) => x >= 0),
+    );
+    const extras: string[] = [];
+    header.forEach((h, idxCol) => {
+      if (!known.has(idxCol)) {
+        const v = get(idxCol);
+        if (v) extras.push(`${h}: ${v}`);
+      }
+    });
+    row._extraNote = extras.length ? extras.join('\n') : null;
+
+    out.push(row);
+  }
+  return out;
+}
+
+// Merge-Regel: nur nicht-leere CSV-Werte überschreiben
+export function mergeCompanyFields<T extends { [k: string]: any }>(
+  current: T,
+  incoming: Partial<T>,
+): T {
+  const next = { ...current };
+  for (const [k, v] of Object.entries(incoming)) {
+    if (v == null) continue;
+    if (typeof v === 'string' && v.trim() === '') continue;
+    (next as any)[k] = v;
+  }
+  return next;
+}

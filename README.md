@@ -65,21 +65,6 @@ pnpm start
 
 Keine zusätzliche Konfiguration nötig. Die SQLite-Datei wird automatisch unter `database/jobs.db` angelegt.
 
-## Wichtige Routen (Auszug)
-
-- `GET /` - Übersicht (Suche/Filter/Sort)
-- `GET /new` - neuen Job anlegen
-- `POST /new` - Job speichern
-- `GET /detail/:id` - Job-Details
-- `GET /edit/:id` - Job bearbeiten
-- `POST /edit/:id` - Job aktualisieren
-- `GET /toggle/:id/:field` - applied/answer toggeln
-- `GET /delete/:id` - Job löschen
-- `GET /companies` - Unternehmen Übersicht
-- `GET /companies/new` - neues Unternehmen anlegen
-- `POST /companies/new` - Unternehmen speichern
-- `GET /companies/:id` - Unternehmens-Detail
-
 ## Konfiguration
 
 Standardwerte:
@@ -124,13 +109,13 @@ Coding-Hinweise:
 - [x] Clipboard Export von Jobs
 - [x] Export CSV von Companies
 - [x] Tests (Unit mit Vitest)
+- [x] Screenshots
 
 - [ ] Server-Validierung (z. B. `zod`) + Fehleranzeigen im UI
 - [ ] Paginierung für Job-Liste
 - [ ] Sortierbare Spaltenköpfe (Client)
 - [ ] Prüfung: `contactId` gehört zur `companyId` beim Speichern
 - [ ] Import (JSON/CSV) von Jobs/Companies
-- [ ] Screenshots
 
 - [ ] mehr Tests (Unit mit Vitest, E2E leichtgewichtig)
 - [ ] Backup/Restore der `jobs.db` (z. B. ZIP-Download)
@@ -138,7 +123,87 @@ Coding-Hinweise:
 - [ ] Aktivitäten/Timeline pro Job (Follow-ups, Termine)
 - [ ] i18n (Deutsch/Englisch Umschaltbar)
 - [ ] Barrierefreiheit (A11y-Audit, ARIA Feinheiten)
-- [ ] Desktop-Bundle (Electron) für „echte“ App-Experience
+
+## Routen & API
+
+- `GET /jobs` – Liste/Filter/Suche
+
+- `GET /jobs/new` – Neues Job-Formular
+
+- `POST /jobs` – Job anlegen
+
+- `GET /jobs/:id` – Job-Detail
+
+- `GET /jobs/:id/edit` – Job bearbeiten
+
+- `POST /jobs/:id` – Job aktualisieren
+
+- `POST /jobs/:id/toggle/:field` – Status toggeln
+
+- `DELETE /jobs/:id` – Job löschen
+
+- `GET /companies` – Unternehmen-Liste
+
+- `GET /companies/new` – Neues Unternehmen
+
+- `POST /companies` – Unternehmen anlegen
+
+- `GET /companies/:id` – Unternehmens-Detail
+
+- `GET /companies/:id/edit` – Unternehmen bearbeiten
+
+- `POST /companies/:id` – Unternehmen aktualisieren
+
+- `POST /companies/:id/contacts` – Kontakt hinzufügen
+
+- `POST /companies/:id/contacts/:contactId` – Kontakt aktualisieren
+
+- `DELETE /companies/:id/contacts/:contactId` – Kontakt löschen
+
+- `DELETE /companies/:id` – Unternehmen löschen _(per Method-Override)_
+
+### REST-API (ohne Auth & ohne CSRF; lokal)
+
+**Health**
+
+- `GET /api/health` → `{ ok: true }`
+
+**Jobs**
+
+- `GET /api/jobs?q=&status=&sort=` – Liste (joined).
+- `POST /api/jobs` – Job anlegen. Body Felder wie `jobTitle`, `companyId`, `contactId`, `salary…`.
+- `GET /api/jobs/:id` – Detail (joined).
+- `PATCH /api/jobs/:id` – Partielles Update (nur übergebene Felder).
+- `DELETE /api/jobs/:id` – Löschen.
+- `POST /api/jobs/:id/toggle` – Body `{ "field": "applied"|"answer" }`.
+- `GET /api/jobs/:id/clipboard` – Markdown-Export (Text).
+
+**Companies**
+
+- `GET /api/companies` – Liste.
+- `POST /api/companies` – Anlegen. Body z. B. `companyName`, `companyWebsite`, …
+- `GET /api/companies/:id` – Detail inkl. Kontakte.
+- `PATCH /api/companies/:id` – Partielles Update.
+- `DELETE /api/companies/:id` – Löschen.
+- `GET /api/companies.csv` – CSV-Export (UTF-8 BOM), Header:
+  `name,website,city,linkedin,glassdoor,stepstone,size_range`
+- `POST /api/companies.csv` – CSV-Import (gleiches Format; optional `id`-Spalte).
+  - Deduplizierung: zuerst per `id`, sonst per `name` (CI).
+  - Nur **nicht-leere** Felder überschreiben; unbekannte Spalten wandern in Notizen.
+  - Antwort: `{ ok, summary: { created, updated, skipped, errors }, details: [...] }`
+
+**Contacts**
+
+- `GET /api/companies/:id/contacts` – Kontakte eines Unternehmens.
+- `POST /api/companies/:id/contacts` – Kontakt anlegen.
+- `PATCH /api/companies/:id/contacts/:contactId` – Kontakt aktualisieren.
+- `DELETE /api/companies/:id/contacts/:contactId` – Kontakt löschen.
+
+**Importer**
+
+- `POST /api/import/glassdoor` – Body `{ url?: string, html?: string }`
+  - Lädt/parst Glassdoor-Unternehmensseite, mappt Felder (Website, Stadt, Größe, Beschreibung …).
+  - Unbekanntes in Notizen.
 
 ## FAQ
 

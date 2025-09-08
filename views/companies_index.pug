@@ -6,6 +6,7 @@ block content
       h1 Unternehmen
       .buttons
         a.btn.secondary(href="/api/companies.csv" download) CSV Export
+        button.btn#csv-import(type="button") CSV Import
         a.btn(href="/companies/new") + Neues Unternehmen
 
   if companies && companies.length
@@ -61,3 +62,34 @@ block content
       h2 Noch keine Unternehmen
       .buttons.center
         a.btn(href="/companies/new") Unternehmen anlegen
+
+  script.
+    (function(){
+      const btn = document.getElementById('csv-import');
+      if (!btn) return;
+      btn.addEventListener('click', async ()=>{
+        try {
+          // Datei wählen
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = '.csv,text/csv,text/plain';
+          input.onchange = async () => {
+            const file = input.files && input.files[0];
+            if (!file) return;
+            const text = await file.text();
+            const res = await fetch('/api/companies.csv', {
+              method: 'POST',
+              headers: { 'content-type': 'text/plain' },
+              body: text
+            });
+            const json = await res.json();
+            if (!res.ok || !json.ok) throw new Error(json.error || 'Import fehlgeschlagen');
+            alert(`Import: erstellt ${json.summary.created}, aktualisiert ${json.summary.updated}, übersprungen ${json.summary.skipped}, Fehler ${json.summary.errors}`);
+            location.reload();
+          };
+          input.click();
+        } catch (e) {
+          alert('Fehler beim CSV-Import: ' + (e && e.message ? e.message : e));
+        }
+      });
+    })();

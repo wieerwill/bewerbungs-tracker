@@ -9,7 +9,10 @@ import {
   requestToCompany,
   requestToContact,
   formatJobForClipboard,
+  parseCompaniesCsv,
+  mergeCompanyFields,
 } from './helpers';
+import { v4 as uuidv4 } from 'uuid';
 import {
   fetchAndParseGlassdoor,
   parseGlassdoorHtml,
@@ -18,7 +21,7 @@ import {
 export function createApiRouter(s: Statements): Router {
   const api = Router();
 
-  // JSON-Parser nur für die API
+  // JSON-Parser nur für API
   api.use(express.json({ limit: '2mb' }));
 
   /* ---------- HEALTH ---------- */
@@ -49,14 +52,14 @@ export function createApiRouter(s: Statements): Router {
     res.status(201).json({ ok: true, data: s.getJobJoinedById(rec.id) ?? rec });
   });
 
-  // Read (joined)
+  // Read
   api.get('/jobs/:id', (req, res) => {
     const joined = s.getJobJoinedById(String(req.params.id));
     if (!joined) return res.status(404).json({ ok: false, error: 'not_found' });
     res.json({ ok: true, data: jobRowToVm(joined) });
   });
 
-  // Update (PATCH = partiell; Body wird mit aktuellem Datensatz gemerged)
+  // Update
   api.patch('/jobs/:id', (req, res) => {
     const row = s.getJobById(String(req.params.id));
     if (!row) return res.status(404).json({ ok: false, error: 'not_found' });
@@ -88,7 +91,7 @@ export function createApiRouter(s: Statements): Router {
     res.json({ ok: true, data: s.getJobJoinedById(id) ?? jobRowToVm(vm) });
   });
 
-  // Clipboard (Markdown)
+  // Clipboard
   api.get('/jobs/:id/clipboard', (req, res) => {
     const id = String(req.params.id);
     const joined = s.getJobJoinedById(id);
@@ -161,7 +164,123 @@ export function createApiRouter(s: Statements): Router {
     res.send(csv);
   });
 
-  /* ---------- CONTACTS (unter Company) ---------- */
+  // CSV IMPORT
+  api.post(
+    '/companies.csv',
+    express.text({
+      type: ['text/*', 'application/octet-stream', 'application/csv'],
+      limit: '5mb',
+    }),
+    (req, res) => {
+      const csv = (req.body ?? '').toString();
+      if (!csv.trim())
+        return res.status(400).json({ ok: false, error: 'empty_csv' });
+
+      const rows = parseCompaniesCsv(csv);
+      const result = {
+        ok: true,
+        summary: { created: 0, updated: 0, skipped: 0, errors: 0 },
+        details: [] as Array<{
+          action: 'created' | 'updated' | 'skipped' | 'error';
+          id?: string;
+          name?: string;
+          reason?: string;
+        }>,
+      };
+
+      for (const r of rows) {
+        try {
+          // 1) Match per ID
+          let target = r.id ? s.getCompanyById(r.id) : undefined;
+
+          // 2) Fallback: Match per Name (case-insensitive, via UNIQUE COLLATE NOCASE)
+          if (!target) {
+            target = s.getCompanyByName(r.name);
+          }
+
+          if (!target) {
+            // Neu anlegen
+            const newRow = {
+              id: r.id || uuidv4(),
+              name: r.name,
+              website: r.website ?? null,
+              city: r.city ?? null,
+              linkedin_url: r.linkedin_url ?? null,
+              glassdoor_url: r.glassdoor_url ?? null,
+              stepstone_url: r.stepstone_url ?? null,
+              size_range: r.size_range ?? null,
+              // Extras in Notiz anhängen
+              note: r._extraNote ?? null,
+            } as any;
+
+            s.insertCompany(newRow);
+            result.summary.created++;
+            result.details.push({
+              action: 'created',
+              id: newRow.id,
+              name: newRow.name,
+            });
+          } else {
+            // Merge bestehend + CSV (nur nicht-leere Felder)
+            const merged = mergeCompanyFields(target, {
+              name: r.name, // falls Groß-/Kleinschreibung vereinheitlicht werden soll
+              website: r.website,
+              city: r.city,
+              linkedin_url: r.linkedin_url,
+              glassdoor_url: r.glassdoor_url,
+              stepstone_url: r.stepstone_url,
+              size_range: r.size_range,
+              note: r._extraNote
+                ? (target.note ? target.note + '\n\n' : '') + r._extraNote
+                : target.note,
+            });
+
+            // Nur updaten, wenn sich etwas ändert
+            const changed =
+              JSON.stringify({
+                ...target,
+                created_at: undefined,
+                updated_at: undefined,
+              }) !==
+              JSON.stringify({
+                ...merged,
+                created_at: undefined,
+                updated_at: undefined,
+              });
+
+            if (changed) {
+              s.updateCompany(merged as any);
+              result.summary.updated++;
+              result.details.push({
+                action: 'updated',
+                id: merged.id,
+                name: merged.name,
+              });
+            } else {
+              result.summary.skipped++;
+              result.details.push({
+                action: 'skipped',
+                id: target.id,
+                name: target.name,
+                reason: 'no_changes',
+              });
+            }
+          }
+        } catch (e: any) {
+          result.summary.errors++;
+          result.details.push({
+            action: 'error',
+            name: r.name,
+            reason: e?.message || 'import_error',
+          });
+        }
+      }
+
+      return res.json(result);
+    },
+  );
+
+  /* ---------- CONTACTS ---------- */
   api.get('/companies/:id/contacts', (req, res) => {
     const companyId = String(req.params.id);
     if (!s.getCompanyById(companyId))
@@ -204,7 +323,7 @@ export function createApiRouter(s: Statements): Router {
     res.json({ ok: true });
   });
 
-  /* ---------- IMPORT (Glassdoor) ---------- */
+  /* ---------- IMPORT ---------- */
   api.post('/import/glassdoor', async (req, res) => {
     try {
       const html = typeof req.body?.html === 'string' ? req.body.html : '';
