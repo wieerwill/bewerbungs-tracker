@@ -5,11 +5,21 @@
     "outDir": "dist",
     "rootDir": "src",
     "strict": true,
+    "moduleResolution": "node",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "types": ["vitest/globals", "node"]
+    "types": ["vitest/globals", "node"],
+    "noEmit": true,
+    "lib": ["ES2020", "DOM"]
   },
-  "include": ["src/**/*.ts"]
+  "include": [
+    "src/**/*.ts",
+    "tests/**/*.ts",
+    "*.config.*",
+    "scripts/**/*.*",
+    "public/**/*.ts"
+  ],
+  "exclude": ["node_modules", "dist"]
 }

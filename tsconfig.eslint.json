@@ -1,4 +1,9 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["src/**/*.ts", "tests/**/*.ts", "*.config.*", "scripts/**/*.*"]
+  "compilerOptions": {
+    "noEmit": true,
+    "lib": ["ES2020", "DOM"]
+  },
+  "include": ["src/**/*.ts", "tests/**/*.ts", "public/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }

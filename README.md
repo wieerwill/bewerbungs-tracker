@@ -214,7 +214,7 @@ Robust, transaktionssicher, eine Datei, kein externer Server. Perfekt fürs priv
 Schnell, leichtgewichtig, keine Build-Komplexität im Frontend nötig.
 
 **Kann ich eigene Farben/Branding setzen?**
-Ja - die Design-Tokens (CSS Variablen) stehen am Anfang von `public/styles/main.css`.
+Ja - die Design-Tokens (CSS Variablen) stehen am Anfang von `public/styles.css`.
 
 ---
 
