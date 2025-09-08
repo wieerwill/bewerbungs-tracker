@@ -33,7 +33,12 @@ app.use(
 );
 // expose token to all templates
 app.use((req, res, next) => {
-  res.locals.csrfToken = (req as any).csrfToken();
+  try {
+    // nur für HTML-Render wichtig; bei JSON-APIs egal
+    res.locals.csrfToken = req.csrfToken();
+  } catch {
+    // bei nicht-GET/ohne Session kann csurf hier werfen, ignorieren
+  }
   next();
 });
 

@@ -6,6 +6,8 @@ block content
       h1 Unternehmen bearbeiten
       if company && company.name
         p.muted #{company.name}
+      .buttons
+        button.btn.secondary(type="button" id="gd-import-btn") Glassdoor importieren
 
   if msg
     .card(role="status" aria-live="polite")
@@ -133,3 +135,66 @@ block content
       .form-actions.buttons
         button.btn(type="submit") Kontakt hinzufügen
         a.btn.secondary(href=`/companies/${company._id}`) Zur Detailansicht
+
+  script.
+    (function(){
+      const btn = document.getElementById('gd-import-btn');
+      if (!btn) return;
+
+      const token = document.querySelector('meta[name="csrf-token"]')?.content || '';
+      const set = (id, val) => { const el = document.getElementById(id); if (el && val != null) el.value = val; };
+
+      async function applyData(c){
+        set('companyName',      c.name || '');
+        set('companyWebsite',   c.website || '');
+        set('companyCity',      c.city || '');
+        set('companySizeRange', c.size_range || '');
+        set('companyIndustry',  c.industry || '');
+        set('companyHiringPage',c.hiring_page || '');
+
+        const noteEl = document.getElementById('companyNote');
+        if (noteEl) {
+          const prev = noteEl.value ? noteEl.value + '\\n\\n' : '';
+          noteEl.value = prev + (c.note || '');
+        }
+      }
+
+      async function postJson(url, payload){
+        const res = await fetch(url, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type':'application/json', 'X-CSRF-Token': token },
+          body: JSON.stringify(payload)
+        });
+        const ct = res.headers.get('content-type') || '';
+        const json = ct.includes('application/json') ? await res.json() : { ok:false, error:'Unerwartete Antwort' };
+        if (!res.ok || !json.ok) throw new Error(json.error || 'Fehler');
+        return json.data;
+      }
+
+      btn.addEventListener('click', async () => {
+        try {
+          const url = prompt('Glassdoor-URL eingeben:');
+          if (!url) return;
+
+          // 1) Versuch: direkten Fetch
+          try {
+            const data = await postJson('/api/import/glassdoor', { url });
+            await applyData(data);
+            alert('Glassdoor-Daten eingefügt. Bitte prüfen & speichern.');
+            return;
+          } catch (e) {
+            // 2) Fallback: HTML einkleben
+            if (!confirm('Direkter Abruf fehlgeschlagen (z. B. 403). HTML-Quelltext einkleben?')) return;
+            alert('Öffne die Glassdoor-Seite, drücke Strg+U (Seitenquelltext), alles kopieren & hier einfügen.');
+            const html = prompt('Füge den kompletten HTML-Quelltext hier ein:');
+            if (!html) return;
+            const data = await postJson('/api/import/glassdoor', { url, html });
+            await applyData(data);
+            alert('Glassdoor-Daten (aus HTML) eingefügt. Bitte prüfen & speichern.');
+          }
+        } catch (err) {
+          alert('Fehler beim Import: ' + (err && err.message ? err.message : err));
+        }
+      });
+    })();

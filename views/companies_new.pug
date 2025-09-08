@@ -4,6 +4,8 @@ block content
   .card
     .card-header
       h1 Neues Unternehmen
+      .buttons
+        button.btn.secondary(type="button" id="gd-import-btn") Glassdoor importieren
 
   if msg
     .card(role="status" aria-live="polite")
@@ -17,8 +19,8 @@ block content
         legend Abschnitt: Unternehmen
         .row.row-2
           .field
-            label(for="company-name") Name *
-            input#company-name(
+            label(for="companyName") Name *
+            input#companyName(
               type="text"
               name="companyName"
               required
@@ -27,50 +29,50 @@ block content
             )
             small.muted Einzigartiger Firmenname (Groß/Kleinschreibung egal).
           .field
-            label(for="company-website") Website
-            input#company-website(type="url" name="companyWebsite" placeholder="https://..." inputmode="url" autocomplete="url")
+            label(for="companyWebsite") Website
+            input#companyWebsite(type="url" name="companyWebsite" placeholder="https://..." inputmode="url" autocomplete="url")
         .row.row-2
           .field
-            label(for="company-street") Straße
-            input#company-street(type="text" name="companyStreet" autocomplete="address-line1")
+            label(for="companyStreet") Straße
+            input#companyStreet(type="text" name="companyStreet" autocomplete="address-line1")
           .field
-            label(for="company-city") Stadt
-            input#company-city(type="text" name="companyCity" autocomplete="address-level2")
+            label(for="companyCity") Stadt
+            input#companyCity(type="text" name="companyCity" autocomplete="address-level2")
         .row.row-2
           .field
-            label(for="company-linkedin") LinkedIn
-            input#company-linkedin(type="url" name="companyLinkedIn" placeholder="https://www.linkedin.com/company/..." inputmode="url" autocomplete="url")
+            label(for="companyLinkedin") LinkedIn
+            input#companyLinkedin(type="url" name="companyLinkedIn" placeholder="https://www.linkedin.com/company/..." inputmode="url" autocomplete="url")
           .field
-            label(for="company-glassdoor") Glassdoor
-            input#company-glassdoor(type="url" name="companyGlassdoor" placeholder="https://www.glassdoor.de/..." inputmode="url" autocomplete="url")
+            label(for="companyGlassdoor") Glassdoor
+            input#companyGlassdoor(type="url" name="companyGlassdoor" placeholder="https://www.glassdoor.de/..." inputmode="url" autocomplete="url")
         .row.row-2
           .field
-            label(for="company-stepstone") StepStone
-            input#company-stepstone(type="url" name="companyStepstone" placeholder="https://www.stepstone.de/..." inputmode="url" autocomplete="url")
+            label(for="companyStepstone") StepStone
+            input#companyStepstone(type="url" name="companyStepstone" placeholder="https://www.stepstone.de/..." inputmode="url" autocomplete="url")
           .field
-            label(for="company-hiringpage") Hiring-Page
-            input#company-hiringpage(type="url" name="companyHiringPage" placeholder="https://.../jobs" inputmode="url" autocomplete="url")
+            label(for="companyHiringpage") Hiring-Page
+            input#companyHiringpage(type="url" name="companyHiringPage" placeholder="https://.../jobs" inputmode="url" autocomplete="url")
         .row.row-2
           .field
-            label(for="company-industry") Branche
-            input#company-industry(type="text" name="companyIndustry" placeholder="z. B. Medizintechnik")
+            label(for="companyIndustry") Branche
+            input#companyIndustry(type="text" name="companyIndustry" placeholder="z. B. Medizintechnik")
           .field
-            label(for="company-size") Größe
-            input#company-size(type="text" name="companySizeRange" placeholder="z. B. 200–500")
+            label(for="companySize") Größe
+            input#companySize(type="text" name="companySizeRange" placeholder="z. B. 200–500")
         .row.row-2
           .field
-            label(for="company-career-email") Karriere-E-Mail
-            input#company-career-email(type="email" name="companyCareerEmail" autocomplete="email" inputmode="email")
+            label(for="companyCareerEmail") Karriere-E-Mail
+            input#companyCareerEmail(type="email" name="companyCareerEmail" autocomplete="email" inputmode="email")
           .field
-            label(for="company-phone") Telefon
-            input#company-phone(type="tel" name="companyPhone" autocomplete="tel" inputmode="tel")
+            label(for="companyPhone") Telefon
+            input#companyPhone(type="tel" name="companyPhone" autocomplete="tel" inputmode="tel")
         .field
-          label(for="company-otherlinks") Weitere Links (JSON)
-          textarea#company-otherlinks(name="companyOtherLinksJson" rows="3" placeholder='z. B. [{"label":"Kununu","url":"https://..."}]')
+          label(for="companyOtherLinksJson") Weitere Links (JSON)
+          textarea#companyOtherLinksJson(name="companyOtherLinksJson" rows="3" placeholder='z. B. [{"label":"Kununu","url":"https://..."}]')
           small.muted Erwartet ein JSON-Array mit Objekten { label, url }.
         .field
-          label(for="company-note") Notizen (Markdown)
-          textarea#company-note(name="companyNote" rows="3")
+          label(for="companyNote") Notizen (Markdown)
+          textarea#companyNote(name="companyNote" rows="3")
 
       fieldset.form-section
         legend Abschnitt: Kontakt (optional)
@@ -91,3 +93,66 @@ block content
       .form-actions.buttons
         button.btn(type="submit") Speichern
         a.btn.secondary(href="/companies") Abbrechen
+
+  script.
+    (function(){
+      const btn = document.getElementById('gd-import-btn');
+      if (!btn) return;
+
+      const token = document.querySelector('meta[name="csrf-token"]')?.content || '';
+      const set = (id, val) => { const el = document.getElementById(id); if (el && val != null) el.value = val; };
+
+      async function applyData(c){
+        set('companyName',      c.name || '');
+        set('companyWebsite',   c.website || '');
+        set('companyCity',      c.city || '');
+        set('companySizeRange', c.size_range || '');
+        set('companyIndustry',  c.industry || '');
+        set('companyHiringPage',c.hiring_page || '');
+
+        const noteEl = document.getElementById('companyNote');
+        if (noteEl) {
+          const prev = noteEl.value ? noteEl.value + '\\n\\n' : '';
+          noteEl.value = prev + (c.note || '');
+        }
+      }
+
+      async function postJson(url, payload){
+        const res = await fetch(url, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type':'application/json', 'X-CSRF-Token': token },
+          body: JSON.stringify(payload)
+        });
+        const ct = res.headers.get('content-type') || '';
+        const json = ct.includes('application/json') ? await res.json() : { ok:false, error:'Unerwartete Antwort' };
+        if (!res.ok || !json.ok) throw new Error(json.error || 'Fehler');
+        return json.data;
+      }
+
+      btn.addEventListener('click', async () => {
+        try {
+          const url = prompt('Glassdoor-URL eingeben:');
+          if (!url) return;
+
+          // 1) Versuch: direkten Fetch
+          try {
+            const data = await postJson('/api/import/glassdoor', { url });
+            await applyData(data);
+            alert('Glassdoor-Daten eingefügt. Bitte prüfen & speichern.');
+            return;
+          } catch (e) {
+            // 2) Fallback: HTML einkleben
+            if (!confirm('Direkter Abruf fehlgeschlagen (z. B. 403). HTML-Quelltext einkleben?')) return;
+            alert('Öffne die Glassdoor-Seite, drücke Strg+U (Seitenquelltext), alles kopieren & hier einfügen.');
+            const html = prompt('Füge den kompletten HTML-Quelltext hier ein:');
+            if (!html) return;
+            const data = await postJson('/api/import/glassdoor', { url, html });
+            await applyData(data);
+            alert('Glassdoor-Daten (aus HTML) eingefügt. Bitte prüfen & speichern.');
+          }
+        } catch (err) {
+          alert('Fehler beim Import: ' + (err && err.message ? err.message : err));
+        }
+      });
+    })();

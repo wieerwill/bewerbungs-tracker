@@ -17,6 +17,7 @@ html(lang="de")
     meta(name="apple-mobile-web-app-status-bar-style" content="default")
     meta(name="apple-mobile-web-app-title" content="Bewerbungen")
     //link(rel="manifest" href="/manifest.json")
+    meta(name="csrf-token" content=csrfToken)
 
     title #{typeof title !== 'undefined' ? title : 'Bewerbungs-Tracker'}
     link(rel="stylesheet", href="/styles.css")
