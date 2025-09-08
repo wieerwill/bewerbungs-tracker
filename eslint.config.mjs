@@ -38,7 +38,7 @@ export default defineConfig([
       sourceType: 'commonjs',
 
       parserOptions: {
-        project: 'tsconfig.json',
+        project: 'tsconfig.eslint.json',
         tsconfigRootDir: __dirname,
       },
     },

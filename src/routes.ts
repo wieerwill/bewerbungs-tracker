@@ -11,9 +11,56 @@ import {
   formatJobForClipboard,
 } from './helpers';
 import { renderMarkdown } from './markdown';
+import type { ListJobsParams } from './types';
+
+const getStr = (v: unknown, fallback = ''): string =>
+  typeof v === 'string' ? v : fallback;
+
+function getEnum<T extends string>(
+  v: unknown,
+  allowed: readonly T[],
+): T | undefined {
+  return typeof v === 'string' && (allowed as readonly string[]).includes(v)
+    ? (v as T)
+    : undefined;
+}
+
+function qParams(req: Request): ListJobsParams {
+  const status = getEnum(getStr(req.query.status), [
+    '',
+    'applied',
+    'not-applied',
+    'answered',
+    'no-answer',
+  ] as const);
+  const sort = getEnum(getStr(req.query.sort), [
+    '',
+    'title',
+    'company',
+  ] as const);
+  return {
+    query: getStr(req.query.q, ''),
+    status: (status ?? '') as ListJobsParams['status'],
+    sort: (sort ?? '') as ListJobsParams['sort'],
+  };
+}
+
+function redirectWithMsg(
+  res: Response,
+  to: string,
+  msg?: string | null,
+  code: 303 | 302 = 303,
+) {
+  const url = msg
+    ? `${to}${to.includes('?') ? '&' : '?'}msg=${encodeURIComponent(msg)}`
+    : to;
+  return res.redirect(code, url);
+}
+
+type ToggleField = 'applied' | 'answer';
 
 export default function registerRoutes(app: Express, s: Statements) {
-  /* --- Compatibility redirects --- */
+  /* --- Legacy-redirects (kompatibel halten) --- */
   app.get('/', (_req, res) => res.redirect(301, '/jobs'));
   app.get('/new', (_req, res) => res.redirect(301, '/jobs/new'));
   app.get('/detail/:id', (req, res) =>
@@ -24,29 +71,21 @@ export default function registerRoutes(app: Express, s: Statements) {
   );
   app.get('/delete/:id', (req, res) =>
     res.redirect(301, `/jobs/${req.params.id}`),
-  ); // handled via form DELETE now
-  app.get(
-    '/toggle/:id/:field',
-    (req, res) => res.redirect(301, `/jobs/${req.params.id}`), // handled via POST now
+  );
+  app.get('/toggle/:id/:field', (req, res) =>
+    res.redirect(301, `/jobs/${req.params.id}`),
   );
 
-  /* ---------------- JOBS ---------------- */
+  /* ======================= JOBS ======================= */
 
-  // list
-  app.get('/jobs', (req: Request, res: Response) => {
-    const q = typeof req.query.q === 'string' ? req.query.q : '';
-    const status =
-      typeof req.query.status === 'string' ? (req.query.status as any) : '';
-    const sort =
-      typeof req.query.sort === 'string' ? (req.query.sort as any) : '';
-    const msg = typeof req.query.msg === 'string' ? req.query.msg : null;
-
-    const rows = s.listJobs({ query: q, status, sort });
+  app.get('/jobs', (req, res) => {
+    const { query, status, sort } = qParams(req);
+    const msg = getStr(req.query.msg, null as unknown as string | undefined);
+    const rows = s.listJobs({ query, status, sort });
     const jobs = rows.map(jobRowToVm);
-    res.render('job_index', { jobs, msg, q, status, sort });
+    res.render('job_index', { jobs, msg, q: query, status, sort });
   });
 
-  // new form (with company/contact dropdowns)
   app.get('/jobs/new', (_req, res) => {
     const companies = s.listCompanies();
     const contactsByCompany = Object.fromEntries(
@@ -55,89 +94,70 @@ export default function registerRoutes(app: Express, s: Statements) {
     res.render('job_new', { msg: null, companies, contactsByCompany });
   });
 
-  // create
-  app.post('/jobs', (req: Request, res: Response) => {
+  app.post('/jobs', (req, res) => {
     const rec = requestToJob(req.body);
-    if (!rec.title)
-      return res.redirect(
-        '/jobs/new?msg=' + encodeURIComponent('Titel ist erforderlich'),
-      );
+    if (!rec.title) {
+      return redirectWithMsg(res, '/jobs/new', 'Titel ist erforderlich');
+    }
     s.insertJob(rec);
-    res.redirect(`/jobs/${rec.id}`);
+    return res.redirect(303, `/jobs/${rec.id}`);
   });
 
-  // detail
-  app.get('/jobs/:id', (req: Request, res: Response) => {
+  app.get('/jobs/:id', (req, res) => {
     const id = String(req.params.id);
     const joined = s.getJobJoinedById(id);
     if (!joined)
-      return res.redirect(
-        '/jobs?msg=' + encodeURIComponent('Kein Job zu dieser ID gefunden'),
-      );
+      return redirectWithMsg(res, '/jobs', 'Kein Job zu dieser ID gefunden');
     const job = jobRowToVm(joined);
-    const msg = typeof req.query.msg === 'string' ? req.query.msg : null;
+    const msg = getStr(req.query.msg, null as unknown as string | undefined);
     res.render('job_detail', { job, msg, renderMarkdown });
   });
 
-  // edit form
   app.get('/jobs/:id/edit', (req, res) => {
     const row = s.getJobById(String(req.params.id));
     if (!row)
-      return res.redirect(
-        '/jobs?msg=' + encodeURIComponent('Kein Job zu dieser ID gefunden'),
-      );
-
+      return redirectWithMsg(res, '/jobs', 'Kein Job zu dieser ID gefunden');
     const job = jobRowToVm({ ...(row as any) });
     const companies = s.listCompanies();
     const contactsByCompany = Object.fromEntries(
       companies.map((c) => [c.id, s.listContactsForCompany(c.id)]),
     );
-    const msg = typeof req.query.msg === 'string' ? req.query.msg : null;
+    const msg = getStr(req.query.msg, null as unknown as string | undefined);
     res.render('job_edit', { job, msg, companies, contactsByCompany });
   });
 
-  // update (POST for simplicity)
-  app.post('/jobs/:id', (req: Request, res: Response) => {
+  app.post('/jobs/:id', (req, res) => {
     const row = s.getJobById(String(req.params.id));
     if (!row)
-      return res.redirect(
-        '/jobs?msg=' + encodeURIComponent('Kein Job zu dieser ID gefunden'),
-      );
+      return redirectWithMsg(res, '/jobs', 'Kein Job zu dieser ID gefunden');
     const currentVm = jobRowToVm({ ...(row as any) });
     const rec = requestToJob(req.body, currentVm);
     s.updateJob(rec);
-    res.redirect(`/jobs/${rec.id}`);
+    return res.redirect(303, `/jobs/${rec.id}`);
   });
 
-  // toggle (POST instead of GET)
-  app.post('/jobs/:id/toggle/:field', (req: Request, res: Response) => {
+  app.post('/jobs/:id/toggle/:field', (req, res) => {
     const id = String(req.params.id);
+    const field = String(req.params.field) as ToggleField;
     const row = s.getJobById(id);
     if (!row)
-      return res.redirect(
-        '/jobs?msg=' + encodeURIComponent('Kein Job zu dieser ID gefunden'),
-      );
+      return redirectWithMsg(res, '/jobs', 'Kein Job zu dieser ID gefunden');
 
     const vm = jobRowToVm({ ...(row as any) });
-    if (req.params.field === 'applied') vm.applied = !vm.applied;
-    else if (req.params.field === 'answer') vm.answer = !vm.answer;
-    else
-      return res.redirect(
-        `/jobs/${id}?msg=` + encodeURIComponent('Unbekanntes Feld'),
-      );
+    if (field === 'applied') vm.applied = !vm.applied;
+    else if (field === 'answer') vm.answer = !vm.answer;
+    else return redirectWithMsg(res, `/jobs/${id}`, 'Unbekanntes Feld');
 
-    const updated = requestToJob({}, vm);
-    s.updateJob(updated);
-    res.redirect(`/jobs/${id}`);
+    s.updateJob(requestToJob({}, vm));
+    return res.redirect(303, `/jobs/${id}`);
   });
 
-  // delete (DELETE)
-  app.delete('/jobs/:id', (req: Request, res: Response) => {
+  app.delete('/jobs/:id', (req, res) => {
     s.deleteJob(String(req.params.id));
-    res.redirect('/jobs');
+    return res.redirect(303, '/jobs');
   });
 
-  /* ---------------- API ---------------- */
+  /* ======================= API ======================= */
 
   app.get('/api/jobs/:id', (req, res) => {
     const id = String(req.params.id);
@@ -151,9 +171,9 @@ export default function registerRoutes(app: Express, s: Statements) {
     }
   });
 
+  // CSV Export Companies
   app.get('/api/companies.csv', (_req, res) => {
-    const companies = s.listCompanies();
-    const csv = companiesToCsv(companies);
+    const csv = companiesToCsv(s.listCompanies());
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader(
       'Content-Disposition',
@@ -162,30 +182,33 @@ export default function registerRoutes(app: Express, s: Statements) {
     res.send(csv);
   });
 
-  /* ---------------- COMPANIES ---------------- */
+  /* ======================= COMPANIES ======================= */
 
-  app.get('/companies', (_req: Request, res: Response) => {
+  app.get('/companies', (_req, res) => {
     const companies = s.listCompanies().map(companyRowToVm);
     res.render('companies_index', { companies });
   });
 
-  app.get('/companies/new', (_req: Request, res: Response) => {
+  app.get('/companies/new', (_req, res) => {
     res.render('companies_new');
   });
 
-  app.post('/companies', (req: Request, res: Response) => {
+  app.post('/companies', (req, res) => {
     const company = requestToCompany(req.body);
-    if (!company.name)
-      return res.redirect(
-        '/companies/new?msg=' +
-          encodeURIComponent('Firmenname ist erforderlich'),
+    if (!company.name) {
+      return redirectWithMsg(
+        res,
+        '/companies/new',
+        'Firmenname ist erforderlich',
       );
+    }
     try {
       s.insertCompany(company);
     } catch {
-      return res.redirect(
-        '/companies/new?msg=' +
-          encodeURIComponent('Unternehmen existiert bereits'),
+      return redirectWithMsg(
+        res,
+        '/companies/new',
+        'Unternehmen existiert bereits',
       );
     }
 
@@ -196,82 +219,86 @@ export default function registerRoutes(app: Express, s: Statements) {
       (req.body.contactNote && String(req.body.contactNote).trim());
 
     if (hasContact) s.insertContact(requestToContact(req.body, company.id));
-    res.redirect(`/companies/${company.id}`);
+    return res.redirect(303, `/companies/${company.id}`);
   });
 
-  app.get('/companies/:id', (req: Request, res: Response) => {
+  app.get('/companies/:id', (req, res) => {
     const row = s.getCompanyById(String(req.params.id));
-    if (!row) return res.redirect('/companies');
+    if (!row) return res.redirect(302, '/companies');
     const company = companyRowToVm(row);
     const contacts = s.listContactsForCompany(company._id).map(contactRowToVm);
     res.render('company_detail', { company, contacts, renderMarkdown });
   });
 
-  app.post('/companies/:id', (req, res) => {
-    const orig = s.getCompanyById(String(req.params.id));
-    if (!orig) return res.redirect('/companies');
-    const next = requestToCompany(req.body, companyRowToVm(orig) as any);
-    next.id = orig.id; // safety
-    try {
-      s.updateCompany(next);
-    } catch {
-      return res.redirect(
-        `/companies/${orig.id}/edit?msg=` +
-          encodeURIComponent('Name bereits vergeben'),
-      );
-    }
-    res.redirect(`/companies/${orig.id}`);
-  });
-
   app.get('/companies/:id/edit', (req, res) => {
     const row = s.getCompanyById(String(req.params.id));
-    if (!row) return res.redirect('/companies');
+    if (!row) return res.redirect(302, '/companies');
     const company = companyRowToVm(row);
     const contacts = s.listContactsForCompany(company._id).map(contactRowToVm);
     res.render('company_edit', { company, contacts, renderMarkdown });
   });
 
+  app.post('/companies/:id', (req, res) => {
+    const orig = s.getCompanyById(String(req.params.id));
+    if (!orig) return res.redirect(302, '/companies');
+
+    const next = requestToCompany(req.body, companyRowToVm(orig) as any);
+    next.id = orig.id; // safety
+
+    try {
+      s.updateCompany(next);
+    } catch {
+      return redirectWithMsg(
+        res,
+        `/companies/${orig.id}/edit`,
+        'Name bereits vergeben',
+      );
+    }
+    return res.redirect(303, `/companies/${orig.id}`);
+  });
+
   app.post('/companies/:id/contacts', (req, res) => {
     const companyId = String(req.params.id);
-    if (!s.getCompanyById(companyId)) return res.redirect('/companies');
+    if (!s.getCompanyById(companyId)) return res.redirect(302, '/companies');
     s.insertContact(requestToContact(req.body, companyId));
-    res.redirect(`/companies/${companyId}/edit`);
+    return res.redirect(303, `/companies/${companyId}/edit`);
   });
 
   app.post('/companies/:id/contacts/:contactId', (req, res) => {
     const companyId = String(req.params.id);
     const contactId = String(req.params.contactId);
-    if (!s.getCompanyById(companyId)) return res.redirect('/companies');
+    if (!s.getCompanyById(companyId)) return res.redirect(302, '/companies');
+
     s.updateContact({
       id: contactId,
       company_id: companyId,
-      name: (req.body.contactName || '').trim(),
-      email: (req.body.contactEmail || '').trim(),
-      phone: (req.body.contactPhone || '').trim(),
-      note: (req.body.contactNote || '').trim(),
+      name: getStr(req.body.contactName).trim() || null,
+      email: getStr(req.body.contactEmail).trim() || null,
+      phone: getStr(req.body.contactPhone).trim() || null,
+      note: getStr(req.body.contactNote).trim() || null,
     } as any);
-    res.redirect(`/companies/${companyId}/edit`);
+
+    return res.redirect(303, `/companies/${companyId}/edit`);
   });
 
   app.delete('/companies/:id/contacts/:contactId', (req, res) => {
     s.deleteContact(String(req.params.contactId));
-    res.redirect(`/companies/${String(req.params.id)}/edit`);
+    return res.redirect(303, `/companies/${String(req.params.id)}/edit`);
   });
 
   app.delete('/companies/:id', (req, res) => {
     const id = String(req.params.id);
     const row = s.getCompanyById(id);
-    if (!row)
-      return res.redirect(
-        '/companies?msg=' + encodeURIComponent('Unternehmen nicht gefunden'),
+    if (!row) {
+      return redirectWithMsg(
+        res,
+        '/companies',
+        'Unternehmen nicht gefunden',
+        302,
       );
-
-    // Hinweis: Kontakte werden per ON DELETE CASCADE entfernt,
-    // Jobs behalten wir, deren company_id wird auf NULL gesetzt.
+    }
+    // Kontakte werden per CASCADE gelöscht; Jobs behalten wir (company_id/contact_id -> NULL handled im DB-Layer/Schema).
     s.deleteCompany(id);
-
-    res.redirect(
-      '/companies?msg=' + encodeURIComponent('Unternehmen gelöscht'),
-    );
+    return redirectWithMsg(res, '/companies', 'Unternehmen gelöscht');
   });
 }

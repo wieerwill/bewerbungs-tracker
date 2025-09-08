@@ -5,28 +5,49 @@ import type {
   JobJoinedRow,
   JobRecord,
   JobViewModel,
+  SalaryPeriod,
+  WorkMode,
+  Seniority,
+  EmploymentType,
+  ContractType,
 } from './types';
 
-const get = (x: unknown): string =>
-  typeof x === 'string' ? x.trim() : (x as string) || '';
-const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
-const numOrNull = (v: unknown) => {
+const str = (v: unknown): string | null => {
   if (v === null || v === undefined) return null;
-  const s = typeof v === 'string' ? v.trim() : v;
-  if (s === '') return null;
+  const s = String(v).trim();
+  return s ? s : null;
+};
+const num = (v: unknown): number | null => {
+  if (v === null || v === undefined) return null;
+  if (typeof v === 'number') return Number.isFinite(v) ? v : null;
+  const s = String(v).trim();
+  if (!s) return null;
   const n = Number(s);
   return Number.isFinite(n) ? n : null;
 };
-const idOrNull = (v: unknown) => {
-  const t = str(v);
-  return t ? t : null; // leere Option -> null (für FK)
-};
-const bool01 = (v: unknown) => {
-  // akzeptiert Checkbox "on", "1", true/false
-  if (v === true || v === 'on' || v === '1' || v === 1) return 1 as const;
-  if (v === false || v === '0' || v === 0) return 0 as const;
-  return 0 as const;
-};
+const flag01 = (v: unknown): 0 | 1 =>
+  v === 1 || v === '1' || v === true || v === 'on' ? 1 : 0;
+
+const asPeriod = (v: unknown): SalaryPeriod | null =>
+  v === 'year' || v === 'month' ? (v as SalaryPeriod) : null;
+const asWorkMode = (v: unknown): WorkMode | null =>
+  v === 'onsite' || v === 'hybrid' || v === 'remote' ? (v as WorkMode) : null;
+const asSeniority = (v: unknown): Seniority | null =>
+  v === 'intern' ||
+  v === 'junior' ||
+  v === 'mid' ||
+  v === 'senior' ||
+  v === 'lead'
+    ? (v as Seniority)
+    : null;
+const asEmployment = (v: unknown): EmploymentType | null =>
+  v === 'full-time' || v === 'part-time' ? (v as EmploymentType) : null;
+const asContract = (v: unknown): ContractType | null =>
+  v === 'permanent' || v === 'fixed-term' || v === 'freelance'
+    ? (v as ContractType)
+    : null;
+const get = (x: unknown): string =>
+  typeof x === 'string' ? x.trim() : (x as string) || '';
 function safeJson(s: string): string | undefined {
   if (!s) return undefined;
   try {
@@ -79,106 +100,138 @@ export function requestToJob(
   body: any,
   current?: Partial<JobViewModel>,
 ): JobRecord {
+  const id = current?._id ?? str(body.id) ?? uuidv4();
+
+  // Company/Contact: priorisiere POST body, falle sonst auf current zurück
+  const company_id = str(body.companyId) ?? current?.company_id ?? null;
+  const contact_id = str(body.contactId) ?? current?.contact_id ?? null;
+
   return {
-    id: current?.id ?? (body.id && str(body.id)) ?? uuidv4(),
-    title: str(body.jobTitle),
-    description: str(body.jobDescription) || null,
-    note: str(body.jobNote) || null,
+    id,
+    title: (str(body.jobTitle) ?? '').trim(), // required upstream
 
-    // Flags: aus Formular oder Current
-    applied:
-      body.applied !== undefined
-        ? bool01(body.applied)
-        : current?.applied
-          ? 1
-          : 0,
-    answer:
-      body.answer !== undefined ? bool01(body.answer) : current?.answer ? 1 : 0,
+    description: str(body.jobDescription),
+    note: str(body.jobNote),
 
-    // Zuordnung
-    company_id:
-      idOrNull(body.companyId) ??
-      (current?.company && current.company._id ? current.company._id : null),
-    contact_id:
-      idOrNull(body.contactId) ??
-      (current?.contact && (current as any).contact._id
-        ? (current as any).contact._id
-        : null),
+    applied: flag01(body.applied ?? current?.applied ?? false),
+    answer: flag01(body.answer ?? current?.answer ?? false),
 
-    // Gehalt & Meta - NaN->null
-    salary_min: numOrNull(body.salaryMin),
-    salary_max: numOrNull(body.salaryMax),
-    salary_target: numOrNull(body.salaryTarget),
-    salary_currency: str(body.salaryCurrency) || null,
-    salary_period: str(body.salaryPeriod) || null, // "year" | "month" | null
+    company_id,
+    contact_id,
 
-    work_mode: str(body.workMode) || null,
-    remote_ratio: numOrNull(body.remoteRatio),
-    seniority: str(body.seniority) || null,
-    employment_type: str(body.employmentType) || null,
-    contract_type: str(body.contractType) || null,
+    salary_min: num(body.salaryMin),
+    salary_max: num(body.salaryMax),
+    salary_target: num(body.salaryTarget),
+    salary_currency: str(body.salaryCurrency),
+    salary_period: asPeriod(body.salaryPeriod),
 
-    start_date: str(body.startDate) || null,
-    deadline_date: str(body.deadlineDate) || null,
-    source_url: str(body.jobSource) || null,
-    application_channel: str(body.applicationChannel) || null,
-    referral:
-      body.referral !== undefined
-        ? bool01(body.referral)
-        : current?.referral
-          ? 1
-          : 0,
+    work_mode: asWorkMode(body.workMode),
+    remote_ratio: num(body.remoteRatio),
+
+    seniority: asSeniority(body.seniority),
+    employment_type: asEmployment(body.employmentType),
+    contract_type: asContract(body.contractType),
+
+    start_date: str(body.startDate),
+    deadline_date: str(body.deadlineDate),
+    source_url: str(body.jobSource),
+    application_channel: str(body.applicationChannel),
+    referral: flag01(body.referral ?? current?.referral ?? false),
   };
 }
 
-export function companyRowToVm(r: Company) {
+export function companyRowToVm(r: any) {
   return {
-    _id: r.id,
-    name: r.name || '',
-    website: r.website || '',
-    street: r.street || '',
-    city: r.city || '',
-    note: r.note || '',
+    _id: String(r.id),
+    name: r.name ?? '',
+    website: r.website ?? '',
+    city: r.city ?? '',
+    street: r.street ?? '',
+    note: r.note ?? '',
+    linkedin_url: r.linkedin_url ?? null,
+    glassdoor_url: r.glassdoor_url ?? null,
+    stepstone_url: r.stepstone_url ?? null,
+    hiring_page: r.hiring_page ?? null,
+    industry: r.industry ?? null,
+    size_range: r.size_range ?? null,
+    career_email: r.career_email ?? null,
+    phone: r.phone ?? null,
     created_at: r.created_at,
     updated_at: r.updated_at,
   };
 }
 
-export function contactRowToVm(r: Contact) {
+export function contactRowToVm(r: any) {
   return {
-    _id: r.id,
-    company_id: r.company_id,
-    name: r.name || '',
-    email: r.email || '',
-    phone: r.phone || '',
-    note: r.note || '',
+    _id: String(r.id),
+    company_id: String(r.company_id),
+    name: r.name ?? '',
+    email: r.email ?? '',
+    phone: r.phone ?? '',
+    note: r.note ?? '',
     created_at: r.created_at,
     updated_at: r.updated_at,
   };
 }
 
-export function jobRowToVm(r: JobJoinedRow): JobViewModel {
+export function jobRowToVm(row: any): JobViewModel {
   return {
-    _id: r.id,
-    title: r.title,
-    description: r.description || '',
-    note: r.note || '',
-    applied: !!r.applied,
-    answer: !!r.answer,
-    company_id: r.company_id ?? null,
-    contact_id: r.contact_id ?? null,
+    _id: String(row.id),
+    title: String(row.title),
+
+    description: (row.description ?? '') as string,
+    note: (row.note ?? '') as string,
+
+    applied: !!row.applied,
+    answer: !!row.answer,
+
+    company_id: row.company_id ?? null,
+    contact_id: row.contact_id ?? null,
+
+    salary_min: row.salary_min ?? null,
+    salary_max: row.salary_max ?? null,
+    salary_target: row.salary_target ?? null,
+    salary_currency: row.salary_currency ?? null,
+    salary_period: (row.salary_period ?? null) as SalaryPeriod | null,
+
+    work_mode: (row.work_mode ?? null) as WorkMode | null,
+    remote_ratio: row.remote_ratio ?? null,
+    seniority: (row.seniority ?? null) as Seniority | null,
+    employment_type: (row.employment_type ?? null) as EmploymentType | null,
+    contract_type: (row.contract_type ?? null) as ContractType | null,
+
+    start_date: row.start_date ?? null,
+    deadline_date: row.deadline_date ?? null,
+    source_url: row.source_url ?? null,
+    application_channel: row.application_channel ?? null,
+    referral: !!row.referral,
+
     company: {
-      name: r.company_name || '',
-      website: r.company_website || '',
-      city: r.company_city || '',
+      name: row.company_name ?? '',
+      website: row.company_website ?? '',
+      city: row.company_city ?? '',
+      street: row.company_street ?? undefined,
+      note: row.company_note ?? undefined,
+      // optionale Felder falls vorhanden (schaden nicht)
+      linkedin_url: row.linkedin_url ?? null,
+      glassdoor_url: row.glassdoor_url ?? null,
+      stepstone_url: row.stepstone_url ?? null,
+      hiring_page: row.hiring_page ?? null,
+      industry: row.industry ?? null,
+      size_range: row.size_range ?? null,
+      career_email: row.career_email ?? null,
+      phone: row.phone ?? null,
     },
+
     contact: {
-      name: r.contact_name || '',
-      email: r.contact_email || '',
-      phone: r.contact_phone || '',
+      name: row.contact_name ?? '',
+      email: row.contact_email ?? '',
+      phone: row.contact_phone ?? '',
+      note: row.contact_note ?? undefined,
     },
-    created_at: r.created_at,
-    updated_at: r.updated_at,
+
+    created_at: row.created_at,
+    updated_at: row.updated_at,
   };
 }
 
@@ -200,20 +253,16 @@ export function formatJobForClipboard(j: JobJoinedRow): string {
   if (j.note) {
     lines.push('', '## Notizen', j.note);
   }
-
   lines.push('', '## Unternehmen');
   lines.push(`- Name: ${j.company_name || '—'}`);
   if (j.company_website) lines.push(`- Website: ${j.company_website}`);
-
   lines.push('', '## Kontakt');
   lines.push(`- Name: ${j.contact_name || '—'}`);
   if (j.contact_email) lines.push(`- E-Mail: ${j.contact_email}`);
   if (j.contact_phone) lines.push(`- Telefon: ${j.contact_phone}`);
-
   lines.push('', '## Status');
   lines.push(`- Angeschrieben: ${j.applied ? 'Ja' : 'Nein'}`);
   lines.push(`- Antwort: ${j.answer ? 'Ja' : 'Nein'}`);
-
   lines.push('', '## Rahmen & Vergütung');
   lines.push(
     `- Spanne: ${money((j as any).salary_min, (j as any).salary_currency, (j as any).salary_period)} - ${money((j as any).salary_max, (j as any).salary_currency, (j as any).salary_period)}`,
@@ -239,7 +288,6 @@ export function formatJobForClipboard(j: JobJoinedRow): string {
     lines.push(`- Ausschreibung: ${(j as any).source_url}`);
   if ((j as any).referral != null)
     lines.push(`- Referral: ${(j as any).referral ? 'Ja' : 'Nein'}`);
-
   lines.push('', `ID: ${j.id}`);
   return lines.join('\n');
 }
