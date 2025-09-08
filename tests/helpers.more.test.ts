@@ -66,10 +66,12 @@ describe('helpers - mapping & formatting', () => {
     ]);
     const lines = csv.replace(/^\uFEFF/, '').split(/\r?\n/);
     expect(lines[0]).toBe(
-      'name,website,city,linkedin_url,glassdoor_url,stepstone_url,size_range',
+      'name,website,city,linkedin,glassdoor,stepstone,size_range',
     );
-    expect(lines[1]).toBe('"ACME, Inc.",https://a,"Ham""burg",,,,100-200');
-    expect(lines[2]).toBe('Globex,,,,,,');
+    expect(lines[1]).toBe(
+      '"ACME, Inc.","https://a","Ham""burg","","","","100-200"',
+    );
+    expect(lines[2]).toBe('"Globex","","","","","",""');
   });
 
   it('formatJobForClipboard contains key sections and markdown headings', () => {

@@ -7,15 +7,9 @@ import {
   requestToCompany,
   requestToContact,
   requestToJob,
-  companiesToCsv,
-  formatJobForClipboard,
 } from './helpers';
 import { renderMarkdown } from './markdown';
 import type { ListJobsParams } from './types';
-import {
-  fetchAndParseGlassdoor,
-  parseGlassdoorHtml,
-} from './importers/glassdoor';
 
 const getStr = (v: unknown, fallback = ''): string =>
   typeof v === 'string' ? v : fallback;
@@ -64,21 +58,8 @@ function redirectWithMsg(
 type ToggleField = 'applied' | 'answer';
 
 export default function registerRoutes(app: Express, s: Statements) {
-  /* --- Legacy-redirects (kompatibel halten) --- */
+  /* --- Legacy-redirects --- */
   app.get('/', (_req, res) => res.redirect(301, '/jobs'));
-  app.get('/new', (_req, res) => res.redirect(301, '/jobs/new'));
-  app.get('/detail/:id', (req, res) =>
-    res.redirect(301, `/jobs/${req.params.id}`),
-  );
-  app.get('/edit/:id', (req, res) =>
-    res.redirect(301, `/jobs/${req.params.id}/edit`),
-  );
-  app.get('/delete/:id', (req, res) =>
-    res.redirect(301, `/jobs/${req.params.id}`),
-  );
-  app.get('/toggle/:id/:field', (req, res) =>
-    res.redirect(301, `/jobs/${req.params.id}`),
-  );
 
   /* ======================= JOBS ======================= */
 
@@ -279,79 +260,5 @@ export default function registerRoutes(app: Express, s: Statements) {
     // Kontakte werden per CASCADE gelöscht; Jobs behalten wir (company_id/contact_id -> NULL handled im DB-Layer/Schema).
     s.deleteCompany(id);
     return redirectWithMsg(res, '/companies', 'Unternehmen gelöscht');
-  });
-
-  /* ======================= API ======================= */
-
-  app.get('/api/jobs/:id', (req, res) => {
-    const id = String(req.params.id);
-    const joined = s.getJobJoinedById(id);
-    if (!joined) return res.status(404).json({ error: 'Not found' });
-
-    if (req.query.format === 'markdown') {
-      res.type('text/plain').send(formatJobForClipboard(joined));
-    } else {
-      res.json(joined);
-    }
-  });
-
-  // CSV Export Companies
-  app.get('/api/companies.csv', (_req, res) => {
-    const csv = companiesToCsv(s.listCompanies());
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader(
-      'Content-Disposition',
-      'attachment; filename="companies.csv"',
-    );
-    res.send(csv);
-  });
-
-  // API: Glassdoor-Import via URL
-
-  app.post('/api/import/glassdoor', async (req, res) => {
-    try {
-      const html = typeof req.body?.html === 'string' ? req.body.html : '';
-      const url = typeof req.body?.url === 'string' ? req.body.url.trim() : '';
-
-      if (html) {
-        const data = parseGlassdoorHtml(html, url || undefined);
-        return res.json({ ok: true, data });
-      }
-
-      if (!url)
-        return res
-          .status(400)
-          .json({ ok: false, error: 'url oder html erforderlich' });
-
-      // Fetch versuchen – kann 403 geben
-      try {
-        const data = await fetchAndParseGlassdoor(url);
-        return res.json({ ok: true, data });
-      } catch (e: any) {
-        // 4xx/5xx sauber kommunizieren
-        return res.status(502).json({
-          ok: false,
-          error: `Abruf fehlgeschlagen (${e?.message || 'Fetch-Fehler'})`,
-        });
-      }
-    } catch (e: any) {
-      return res
-        .status(500)
-        .json({ ok: false, error: e?.message || 'Fehler beim Import' });
-    }
-  });
-
-  // Optional: Offline/Debug – HTML direkt posten (kein Fetch)
-  app.post('/api/import/glassdoor/preview', (req, res) => {
-    try {
-      const html = typeof req.body?.html === 'string' ? req.body.html : '';
-      if (!html) return res.status(400).json({ error: 'html erforderlich' });
-      const data = parseGlassdoorHtml(html);
-      return res.json({ ok: true, data });
-    } catch (e: any) {
-      return res
-        .status(500)
-        .json({ ok: false, error: e?.message || 'Fehler beim Parsen' });
-    }
   });
 }

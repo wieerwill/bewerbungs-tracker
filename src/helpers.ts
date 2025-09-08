@@ -292,39 +292,39 @@ export function formatJobForClipboard(j: JobJoinedRow): string {
   return lines.join('\n');
 }
 
-// RFC4180-ish CSV with UTF-8 BOM (Excel-friendly)
-function csvEscape(val: unknown): string {
-  const s = (val ?? '').toString();
-  if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
-  return s;
-}
-
 export function companiesToCsv(rows: Company[]): string {
   const header = [
     'name',
     'website',
     'city',
-    'linkedin_url',
-    'glassdoor_url',
-    'stepstone_url',
+    'linkedin',
+    'glassdoor',
+    'stepstone',
     'size_range',
   ];
-  const lines = [header.join(',')];
+  const out: string[] = [header.join(',')];
+
+  const q = (s: string | null | undefined) => {
+    if (s == null) return '';
+    const v = String(s).replace(/"/g, '""');
+    // Felder immer quoten: sicher für Komma/Zeilenumbrüche
+    return `"${v}"`;
+  };
 
   for (const r of rows) {
-    lines.push(
+    out.push(
       [
-        csvEscape(r.name),
-        csvEscape(r.website),
-        csvEscape(r.city),
-        csvEscape(r.linkedin_url),
-        csvEscape(r.glassdoor_url),
-        csvEscape(r.stepstone_url),
-        csvEscape(r.size_range),
+        q(r.name ?? ''),
+        q(r.website ?? ''),
+        q(r.city ?? ''),
+        q(r.linkedin_url ?? ''),
+        q(r.glassdoor_url ?? ''),
+        q(r.stepstone_url ?? ''),
+        q(r.size_range ?? ''),
       ].join(','),
     );
   }
 
-  // Prepend BOM for Excel
-  return '\uFEFF' + lines.join('\r\n');
+  // BOM für Excel-Kompatibilität beibehalten
+  return '\uFEFF' + out.join('\n');
 }

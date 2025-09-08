@@ -8,6 +8,7 @@ import csurf from 'csurf';
 
 import createDatabase from './database';
 import createStatements from './statements';
+import { createApiRouter } from './api';
 import registerRoutes from './routes';
 
 const app = express();
@@ -47,6 +48,7 @@ const db = createDatabase({ baseDir: path.join(__dirname, '..') });
 const statements = createStatements(db);
 
 /* Routes */
+app.use('/api', createApiRouter(statements));
 registerRoutes(app, statements);
 
 /* Fallback */

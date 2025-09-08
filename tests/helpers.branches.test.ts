@@ -16,10 +16,10 @@ describe('helpers branches', () => {
 
     expect(
       body.startsWith(
-        'name,website,city,linkedin_url,glassdoor_url,stepstone_url,size_range',
+        'name,website,city,linkedin,glassdoor,stepstone,size_range',
       ),
     ).toBe(true);
 
-    expect(body).toContain('"ACME ""Intl""","https://a\nb","A,B",,,,');
+    expect(body).toContain('"ACME ""Intl""","https://a\nb","A,B","","","",""');
   });
 });
