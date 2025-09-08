@@ -126,3 +126,7 @@ export interface ListJobsParams {
   status?: '' | 'applied' | 'not-applied' | 'answered' | 'no-answer';
   sort?: '' | 'title' | 'company';
 }
+
+export interface ListCompaniesParams {
+  query?: string;
+}

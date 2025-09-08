@@ -26,13 +26,15 @@ body
     a.skip-link(href="#main") Zum Inhalt springen
     header.site-header(role="banner")
       a.brand(href="/")
-        span.logo ◼
+        span.logo
+          img(src="/favicon.svg")
         span.brand-text Bewerbungs-Tracker
       nav.main-nav(role="navigation" aria-label="Hauptnavigation")
         ul
-          li: a(href="/jobs" aria-current=(currentPath==='/jobs' ? 'page' : null)) Übersicht
-          li: a(href="/jobs/new" aria-current=(currentPath==='/jobs/new' ? 'page' : null)) Neuer Job
+          li: a(href="/jobs" aria-current=(currentPath==='/jobs' ? 'page' : null)) Jobs
+          li: a(href="/jobs/new" aria-current=(currentPath==='/jobs/new' ? 'page' : null)) + Neuer Job
           li: a(href="/companies" aria-current=(currentPath==='/companies' ? 'page' : null)) Unternehmen
+          li: a(href="/companies/new" aria-current=(currentPath==='/companies/new' ? 'page' : null)) + Neues Unternehmen
 
     div#live-region(role="status" aria-live="polite" class="sr-only")
 
@@ -40,7 +42,7 @@ body
       block content
 
     footer(role="contentinfo")
-      p made by 
+      p Created by 
         a(href="http://github.com/wieerwill") WieErWill
 
 script.

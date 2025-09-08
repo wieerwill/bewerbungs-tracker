@@ -299,10 +299,19 @@ export default function createStatements(db: SqliteDatabase) {
   function getCompanyByName(name: string) {
     return stmtGetCompanyByName.get(name) as Company | undefined;
   }
-  function listCompanies(): Company[] {
+  function listCompanies(params: { query?: string } = {}): Company[] {
+    const { query } = params;
+    if (query && query.trim()) {
+      const like = `%${query.trim()}%`;
+      const sql = `
+      SELECT * FROM companies
+      WHERE name LIKE @like OR website LIKE @like OR city LIKE @like
+      ORDER BY name COLLATE NOCASE ASC
+    `;
+      return db.prepare(sql).all({ like }) as Company[];
+    }
     return stmtListCompanies.all() as Company[];
   }
-
   function insertContact(row: Contact) {
     return stmtInsertContact.run(normalizeContact(row));
   }

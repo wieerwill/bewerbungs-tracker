@@ -5,14 +5,28 @@ block content
     .card-header
       h1 Unternehmen
       .buttons
-        a.btn.secondary(href="/api/companies.csv" download) CSV Export
+        a.btn(href="/api/companies.csv" download) CSV Export
         button.btn#csv-import(type="button") CSV Import
         a.btn(href="/companies/new") + Neues Unternehmen
+
+  // Suche (GET /companies?q=...)
+  .card
+    form(action="/companies", method="GET", role="search", aria-label="Suche", class="toolbar")
+      span.muted Suche
+      input#q(
+        type="text"
+        name="q"
+        value=(typeof q !== 'undefined' ? q : '')
+        placeholder="Name, Website, Ort …"
+        autocomplete="off"
+        aria-label="Suche"
+      )
+      button.btn(type="submit") Anwenden
+      a.btn.secondary(href="/companies") Zurücksetzen
 
   if companies && companies.length
     .table-wrap
       table.table(aria-describedby="companies-help")
-        caption Unternehmen – Übersicht
         thead
           tr
             th(scope="col" style="width:3rem") #
@@ -53,9 +67,8 @@ block content
                   | —
               td.nowrap
                 .buttons.nowrap
-                  a.btn.secondary(href=`/companies/${c._id}`) Details
                   a.btn.warn(href=`/companies/${c._id}/edit`) Bearbeiten
-    p#companies-help.muted Tabellenspalten sind scrollbar, Profil-Kürzel: in=LinkedIn, gd=Glassdoor, st=StepStone.
+    p#companies-help.muted Profil-Kürzel: in=LinkedIn, gd=Glassdoor, st=StepStone
 
   else
     .card.center.max-w-sm

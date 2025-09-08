@@ -144,9 +144,10 @@ export default function registerRoutes(app: Express, s: Statements) {
 
   /* ======================= COMPANIES ======================= */
 
-  app.get('/companies', (_req, res) => {
-    const companies = s.listCompanies().map(companyRowToVm);
-    res.render('companies_index', { companies });
+  app.get('/companies', (req, res) => {
+    const q = typeof req.query.q === 'string' ? req.query.q : '';
+    const companies = s.listCompanies({ query: q }).map(companyRowToVm);
+    res.render('companies_index', { companies, q });
   });
 
   app.get('/companies/new', (_req, res) => {

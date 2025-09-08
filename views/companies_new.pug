@@ -16,7 +16,7 @@ block content
       input(type="hidden", name="_csrf", value=csrfToken)
 
       fieldset.form-section
-        legend Abschnitt: Unternehmen
+        legend Unternehmen
         .row.row-2
           .field
             label(for="companyName") Name *
@@ -67,15 +67,15 @@ block content
             label(for="companyPhone") Telefon
             input#companyPhone(type="tel" name="companyPhone" autocomplete="tel" inputmode="tel")
         .field
+          label(for="companyNote") Notizen (Markdown)
+          textarea#companyNote(name="companyNote" rows="5")
+        .field
           label(for="companyOtherLinksJson") Weitere Links (JSON)
           textarea#companyOtherLinksJson(name="companyOtherLinksJson" rows="3" placeholder='z. B. [{"label":"Kununu","url":"https://..."}]')
           small.muted Erwartet ein JSON-Array mit Objekten { label, url }.
-        .field
-          label(for="companyNote") Notizen (Markdown)
-          textarea#companyNote(name="companyNote" rows="3")
 
       fieldset.form-section
-        legend Abschnitt: Kontakt (optional)
+        legend Kontakt (optional)
         .row.row-3
           .field
             label(for="contact-name") Name
