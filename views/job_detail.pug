@@ -7,10 +7,10 @@ block content
       h1= job && job.title ? job.title : 'Bewerbung'
       .buttons
         if job && job._id
-          button.btn.secondary.js-copy-job(type="button", data-jobid=job._id, aria-label=`Job kopieren: ${job.title || ''}`) Kopieren
+          a.btn(href="/jobs") Übersicht
+          button.btn.success.js-copy-job(type="button", data-jobid=job._id, aria-label=`Job kopieren: ${job.title || ''}`) Kopieren
           noscript
-            a.btn.secondary(href=`/api/jobs/${job._id}?format=markdown`) Kopieren (Markdown)
-          a.btn.secondary(href="/jobs") Übersicht
+            a.btn.success(href=`/api/jobs/${job._id}?format=markdown`) Kopieren
           a.btn.warn(href=`/jobs/${job._id}/edit`) Bearbeiten
           form(method="POST", action=`/jobs/${job._id}?_method=DELETE`, style="display:inline")
             input(type="hidden", name="_csrf", value=csrfToken)
@@ -56,49 +56,49 @@ block content
       .meta-grid
         if job.salary_min || job.salary_max
           .meta-item
-            span.meta-label Gehaltsspanne
+            span.meta-label Gehaltsspanne&nbsp;&nbsp;
             span.meta-value
               | #{job.salary_min ? job.salary_min.toLocaleString() : '—'} – #{job.salary_max ? job.salary_max.toLocaleString() : '—'} #{job.salary_currency || 'EUR'} / #{job.salary_period==='month' ? 'Monat' : 'Jahr'}
         if job.salary_target
           .meta-item
-            span.meta-label Zielgehalt
+            span.meta-label Zielgehalt&nbsp;&nbsp;
             span.meta-value #{job.salary_target.toLocaleString()} #{job.salary_currency || 'EUR'} / #{job.salary_period==='month' ? 'Monat' : 'Jahr'}
         if job.work_mode
           .meta-item
-            span.meta-label Arbeitsmodus
+            span.meta-label Arbeitsmodus&nbsp;&nbsp;
             span.meta-value #{job.work_mode}#{job.remote_ratio != null ? ` (${job.remote_ratio}% Remote)` : ''}
         if job.seniority
           .meta-item
-            span.meta-label Seniorität
+            span.meta-label Seniorität&nbsp;&nbsp;
             span.meta-value= job.seniority
         if job.employment_type
           .meta-item
-            span.meta-label Anstellungsart
+            span.meta-label Anstellungsart&nbsp;&nbsp;
             span.meta-value= job.employment_type
         if job.contract_type
           .meta-item
-            span.meta-label Vertrag
+            span.meta-label Vertrag&nbsp;&nbsp;
             span.meta-value= job.contract_type
         if job.start_date
           .meta-item
-            span.meta-label Startdatum
+            span.meta-label Startdatum&nbsp;&nbsp;
             span.meta-value= job.start_date
         if job.deadline_date
           .meta-item
-            span.meta-label Bewerbungsfrist
+            span.meta-label Bewerbungsfrist&nbsp;&nbsp;
             span.meta-value= job.deadline_date
         if job.application_channel
           .meta-item
-            span.meta-label Kanal
+            span.meta-label Kanal&nbsp;&nbsp;
             span.meta-value= job.application_channel
         if job.source_url
           .meta-item
-            span.meta-label Ausschreibung
+            span.meta-label Ausschreibung&nbsp;&nbsp;
             span.meta-value
               a(href=job.source_url rel="noopener noreferrer") Link
         if job.referral != null
           .meta-item
-            span.meta-label Referral
+            span.meta-label Referral&nbsp;&nbsp;
             span.meta-value
               if job.referral
                 span.badge.badge-ok Ja
@@ -114,62 +114,62 @@ block content
       .meta-grid
         if company.name
           .meta-item
-            span.meta-label Name
+            span.meta-label Name&nbsp;&nbsp;
             span.meta-value= company.name
         if site
           .meta-item
-            span.meta-label Website
+            span.meta-label Website&nbsp;&nbsp;
             span.meta-value
               a(href=site rel="noopener noreferrer")= company.website
         if company.linkedin_url
           .meta-item
-            span.meta-label LinkedIn
+            span.meta-label LinkedIn&nbsp;&nbsp;
             span.meta-value
               a(href=company.linkedin_url rel="noopener noreferrer") Profil
         if company.glassdoor_url
           .meta-item
-            span.meta-label Glassdoor
+            span.meta-label Glassdoor&nbsp;&nbsp;
             span.meta-value
               a(href=company.glassdoor_url rel="noopener noreferrer") Profil
         if company.stepstone_url
           .meta-item
-            span.meta-label StepStone
+            span.meta-label StepStone&nbsp;&nbsp;
             span.meta-value
               a(href=company.stepstone_url rel="noopener noreferrer") Profil
         if company.hiring_page
           .meta-item
-            span.meta-label Hiring-Page
+            span.meta-label Hiring-Page&nbsp;&nbsp;
             span.meta-value
               a(href=company.hiring_page rel="noopener noreferrer") Karriere
         if company.industry
           .meta-item
-            span.meta-label Branche
+            span.meta-label Branche&nbsp;&nbsp;
             span.meta-value= company.industry
         if company.size_range
           .meta-item
-            span.meta-label Größe
+            span.meta-label Größe&nbsp;&nbsp;
             span.meta-value= company.size_range
         if company.career_email
           .meta-item
-            span.meta-label Karriere-E-Mail
+            span.meta-label Karriere-E-Mail&nbsp;&nbsp;
             span.meta-value
               a(href=`mailto:${company.career_email}`)= company.career_email
         if company.phone
           .meta-item
-            span.meta-label Telefon
+            span.meta-label Telefon&nbsp;&nbsp;
             span.meta-value
               a(href=`tel:${company.phone}`)= company.phone
         if company.street
           .meta-item
-            span.meta-label Straße
+            span.meta-label Straße&nbsp;&nbsp;
             span.meta-value= company.street
         if company.city
           .meta-item
-            span.meta-label Stadt
+            span.meta-label Stadt&nbsp;&nbsp;
             span.meta-value= company.city
       if company.note
         .stack-12
-          h3 Notizen
+          h3 Notizen&nbsp;&nbsp;
           .prose!= renderMarkdown(company.note)
 
     .card
@@ -179,16 +179,16 @@ block content
       .meta-grid
         if contact.name
           .meta-item
-            span.meta-label Name
+            span.meta-label Name&nbsp;&nbsp;
             span.meta-value= contact.name
         if contact.email
           .meta-item
-            span.meta-label E-Mail
+            span.meta-label E-Mail&nbsp;&nbsp;
             span.meta-value
               a(href=`mailto:${contact.email}`)= contact.email
         if phone
           .meta-item
-            span.meta-label Telefon
+            span.meta-label Telefon&nbsp;&nbsp;
             span.meta-value
               a(href=`tel:${phone}`)= phone
       if contact.note
@@ -202,11 +202,11 @@ block content
     .meta-grid
       if job && job._id
         .meta-item
-          span.meta-label Job ID
+          span.meta-label Job ID&nbsp;&nbsp;
           span.meta-value= job._id
       if job && job.applied !== undefined
         .meta-item
-          span.meta-label Angeschrieben
+          span.meta-label Angeschrieben&nbsp;&nbsp;
           span.meta-value
             if job.applied
               span.badge.badge-ok Ja
@@ -214,7 +214,7 @@ block content
               span.badge.badge-no Nein
       if job && job.answer !== undefined
         .meta-item
-          span.meta-label Antwort
+          span.meta-label Antwort&nbsp;&nbsp;
           span.meta-value
             if job.answer
               span.badge.badge-ok Ja

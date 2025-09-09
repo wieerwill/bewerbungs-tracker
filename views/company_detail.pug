@@ -23,34 +23,34 @@ block content
       .meta-grid
         if company.website
           .meta-item
-            span.meta-label Website
+            span.meta-label Website&nbsp;&nbsp;
             span.meta-value
               - const u = company.website.startsWith('http') ? company.website : `https://${company.website}`;
               a.truncate(href=u rel="noopener noreferrer" title=company.website)= company.website
         if company.street
           .meta-item
-            span.meta-label Straße
+            span.meta-label Straße&nbsp;&nbsp;
             span.meta-value= company.street
         if company.city
           .meta-item
-            span.meta-label Stadt
+            span.meta-label Stadt&nbsp;&nbsp;
             span.meta-value= company.city
         if company.industry
           .meta-item
-            span.meta-label Branche
+            span.meta-label Branche&nbsp;&nbsp;
             span.meta-value= company.industry
         if company.size_range
           .meta-item
-            span.meta-label Größe
+            span.meta-label Größe&nbsp;&nbsp;
             span.meta-value= company.size_range
         if company.career_email
           .meta-item
-            span.meta-label Karriere-E-Mail
+            span.meta-label Karriere-E-Mail&nbsp;&nbsp;
             span.meta-value
               a(href=`mailto:${company.career_email}`)= company.career_email
         if company.phone
           .meta-item
-            span.meta-label Telefon
+            span.meta-label Telefon&nbsp;&nbsp;
             span.meta-value
               a(href=`tel:${company.phone}`)= company.phone
 

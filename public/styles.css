@@ -432,6 +432,10 @@ select[required] {
   color: var(--text);
   border: var(--border);
 }
+.btn.success {
+  background: var(--ok);
+  border: var(--border);
+}
 .btn.warn {
   background: linear-gradient(135deg, var(--warn), #f97316);
   color: #170a00;
@@ -613,8 +617,12 @@ label[for='referral'] {
   flex-wrap: wrap;
 }
 .toolbar input[type='text'] {
-  min-width: 260px;
-  flex: 1 1 280px;
+  min-width: 200px;
+  flex: 1 1 200px;
+}
+.toolbar select {
+  min-width: 150px;
+  flex: 1 1 150px;
 }
 .toolbar .muted {
   white-space: nowrap;

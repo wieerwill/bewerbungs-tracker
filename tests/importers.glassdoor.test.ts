@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import { parseGlassdoorHtml } from '../src/importers/glassdoor';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { describe, expect, it } from 'vitest';
+import { parseGlassdoorHtml } from '../src/importers/glassdoor';
 
 describe('importers', () => {
   it('parses reduced glassdoor HTML', () => {
@@ -10,7 +10,7 @@ describe('importers', () => {
       join(__dirname, 'fixtures/rohde-glassdoor.html'),
       'utf8',
     );
-    const pc = parseGlassdoorHtml(html, 'https://www.glassdoor.de/…');
+    const pc = parseGlassdoorHtml(html, 'https://www.glassdoor.de/...');
     expect(pc.name).toMatch(/Rohde/);
     expect(pc.city?.toLowerCase()).toContain('münchen');
     expect(pc.size_range?.toLowerCase()).toContain('mitarbeiter');

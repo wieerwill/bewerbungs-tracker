@@ -17,6 +17,7 @@ import {
   fetchAndParseGlassdoor,
   parseGlassdoorHtml,
 } from './importers/glassdoor';
+import { parseGlassdoorJobHtml } from './importers/glassdoorJob';
 
 export function createApiRouter(s: Statements): Router {
   const api = Router();
@@ -350,6 +351,37 @@ export function createApiRouter(s: Statements): Router {
       return res
         .status(500)
         .json({ ok: false, error: e?.message || 'Fehler beim Import' });
+    }
+  });
+
+  // Glassdoor Job Import
+  api.post('/import/glassdoor-job', async (req, res) => {
+    try {
+      let html: string | undefined;
+
+      // 1) text/html oder text/* → Body ist bereits der HTML-String
+      const ct = (req.headers['content-type'] || '').toLowerCase();
+      if (ct.startsWith('text/')) {
+        html = typeof req.body === 'string' ? req.body : undefined;
+      }
+
+      // 2) application/json → { html: string } oder { url, html }
+      if (!html && req.body && typeof req.body === 'object') {
+        if (typeof (req.body as any).html === 'string') {
+          html = (req.body as any).html;
+        }
+      }
+
+      if (!html || !html.trim()) {
+        return res.status(400).json({ ok: false, error: 'html required' });
+      }
+
+      const data = parseGlassdoorJobHtml(html);
+      return res.json({ ok: true, data });
+    } catch (err: any) {
+      return res
+        .status(500)
+        .json({ ok: false, error: err?.message || 'parse failed' });
     }
   });
 

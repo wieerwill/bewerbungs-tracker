@@ -40,9 +40,6 @@ importers:
       sanitize-html:
         specifier: ^2.17.0
         version: 2.17.0
-      undici:
-        specifier: ^7.15.0
-        version: 7.15.0
       uuid:
         specifier: 11.1.0
         version: 11.1.0

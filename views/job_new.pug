@@ -4,6 +4,8 @@ block content
   .card
     .card-header
       h1 Neue Bewerbung
+      .buttons
+        button.btn#gd-job-import(type="button") Glassdoor importieren
 
   if msg
     .card(role="status" aria-live="polite")
@@ -172,5 +174,88 @@ block content
       companySel && companySel.addEventListener('change', (e)=>{
         const id = e.target && e.target.value;
         if(id) renderContacts(id);
+      });
+    })();
+
+    (function(){
+      const btn = document.getElementById('gd-job-import');
+      if (!btn) return;
+
+      const token = document.querySelector('meta[name="csrf-token"]')?.content || '';
+      const set = (id, val) => { const el = document.getElementById(id); if (el && val != null) el.value = val; };
+
+      async function applyJobData(d){
+        set('job-title',        d.title || '');
+        set('job-description',  d.description || '');
+        set('job-source',       d.source_url || '');
+        set('salaryCurrency',   d.salary_currency || '');
+        set('deadlineDate',     d.deadline_date || '');
+        set('applicationChannel', d.application_channel || 'Glassdoor');
+
+        // Selects mappen
+        const emp = document.getElementById('employmentType');
+        if (emp && d.employment_type) {
+          const map = { 'full-time':'full-time', 'part-time':'part-time', 'freelance':'freelance' };
+          if (map[d.employment_type]) emp.value = map[d.employment_type];
+        }
+        const ct = document.getElementById('contractType');
+        if (ct && d.contract_type) {
+          const map = { 'permanent':'permanent', 'fixed-term':'fixed-term', 'freelance':'freelance' };
+          if (map[d.contract_type]) ct.value = map[d.contract_type];
+        }
+
+        // Company auto-select (falls bekannt)
+        if (d.company_name) {
+          const sel = document.getElementById('companyId');
+          const name = String(d.company_name).trim().toLowerCase();
+          if (sel) {
+            for (const opt of sel.options) {
+              if (String(opt.textContent || '').trim().toLowerCase() === name) {
+                sel.value = opt.value;
+                sel.dispatchEvent(new Event('change', { bubbles:true })); // Kontakte refreshen
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      async function postJson(url, payload){
+        const res = await fetch(url, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type':'application/json', 'X-CSRF-Token': token },
+          body: JSON.stringify(payload)
+        });
+        const ct = res.headers.get('content-type') || '';
+        const json = ct.includes('application/json') ? await res.json() : { ok:false, error:'Unerwartete Antwort' };
+        if (!res.ok || !json.ok) throw new Error(json.error || 'Fehler');
+        return json.data;
+      }
+
+      btn.addEventListener('click', async () => {
+        try {
+          const url = prompt('Glassdoor-URL der Stelle eingeben:');
+          if (!url) return;
+
+          // 1) Direkt versuchen (Server lädt URL → HTML → parsed)
+          try {
+            const data = await postJson('/api/import/glassdoor-job', { url });
+            await applyJobData(data);
+            alert('Glassdoor-Daten eingefügt. Bitte prüfen & speichern.');
+            return;
+          } catch (e) {
+            // 2) Fallback: HTML einkleben
+            if (!confirm('Direkter Abruf fehlgeschlagen (z. B. 403). HTML-Quelltext einkleben?')) return;
+            alert('Öffne die Glassdoor-Seite, drücke Strg+U (Seitenquelltext), alles kopieren & hier einfügen.');
+            const html = prompt('Füge den kompletten HTML-Quelltext hier ein:');
+            if (!html) return;
+            const data = await postJson('/api/import/glassdoor-job', { url, html });
+            await applyJobData(data);
+            alert('Glassdoor-Daten (aus HTML) eingefügt. Bitte prüfen & speichern.');
+          }
+        } catch (err) {
+          alert('Fehler beim Import: ' + (err && err.message ? err.message : err));
+        }
       });
     })();

@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { makeApiApp, http } from './api.util';
+import { describe, expect, it } from 'vitest';
+import { http, makeApiApp } from './api.util';
 
 describe('api - health', () => {
   it('GET /api/health returns ok', async () => {
@@ -268,7 +268,7 @@ const sampleHtml = `
       <li>Unternehmenssoftware & Netzwerklösungen</li>
     </ul>
     <a data-test="employer-website" href="http://www.rohde-schwarz.com/career">www.rohde-schwarz.com/career</a>
-    <div data-test="employerDescription">Qualität, Präzision und Innovation …</div>
+    <div data-test="employerDescription">Qualität, Präzision und Innovation ...</div>
   </body>
 </html>
 `;

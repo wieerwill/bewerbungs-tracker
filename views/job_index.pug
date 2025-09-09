@@ -6,29 +6,21 @@ block content
       h1 Bewerbungen
       .buttons
         a.btn(href="/jobs/new") + Neue Bewerbung
-    // Toolbar: GET /jobs?q=...
-    form(action="/jobs", method="GET", role="search", aria-label="Suche", class="stack-12")
-      .row.row-3
-        .field
-          label(for="q") Suche
-          input#q(type="text", name="q", value=(typeof q !== 'undefined' ? q : ''), placeholder="Titel, Firma, Ort ..." autocomplete="off")
-        .field
-          label(for="status") Status (optional)
-          select#status(name="status")
-            option(value="" selected=(!status)) — Alle —
-            option(value="applied" selected=(status==='applied')) Angeschrieben
-            option(value="not-applied" selected=(status==='not-applied')) Nicht angeschrieben
-            option(value="answered" selected=(status==='answered')) Antwort erhalten
-            option(value="no-answer" selected=(status==='no-answer')) Keine Antwort
-        .field
-          label(for="sort") Sortieren
-          select#sort(name="sort")
-            option(value="" selected=(!sort)) Neueste zuerst
-            option(value="title" selected=(sort==='title')) Titel A–Z
-            option(value="company" selected=(sort==='company')) Firma A–Z
-      .form-actions.buttons
-        button.btn(type="submit") Anwenden
-        a.btn.secondary(href="/jobs") Zurücksetzen
+
+  // Toolbar: GET /jobs?q=...
+  .card
+    form(action="/jobs", method="GET", role="search", aria-label="Suche", class="toolbar")
+      span.muted Suche
+      input#q(type="text", name="q", value=(typeof q !== 'undefined' ? q : ''), placeholder="Titel, Firma, Ort ..." autocomplete="off")
+      span.muted Status
+      select#status(name="status")
+        option(value="" selected=(!status)) -- Alle --
+        option(value="applied" selected=(status==='applied')) Angeschrieben
+        option(value="not-applied" selected=(status==='not-applied')) Nicht angeschrieben
+        option(value="answered" selected=(status==='answered')) Antwort erhalten
+        option(value="no-answer" selected=(status==='no-answer')) Keine Antwort
+      button.btn(type="submit") Anwenden
+      a.btn.secondary(href="/jobs") Zurücksetzen
 
   if msg
     .card(role="status" aria-live="polite")
@@ -37,7 +29,6 @@ block content
   if jobs && jobs.length
     .table-wrap
       table.table(aria-describedby="jobs-help")
-        caption Bewerbungen – Übersicht
         thead
           tr
             th(scope="col") #
@@ -61,17 +52,15 @@ block content
                   = job.answer ? 'Ja' : 'Nein'
               td
                 .buttons.nowrap
-                  a.btn.secondary(href=`/jobs/${job._id}`) Details
+                  //a.btn.secondary(href=`/jobs/${job._id}`) Details
                   a.btn.warn(href=`/jobs/${job._id}/edit`) Bearbeiten
-                  form(method="POST", action=`/jobs/${job._id}?_method=DELETE`, style="display:inline")
+                  //form(method="POST", action=`/jobs/${job._id}?_method=DELETE`, style="display:inline")
                     input(type="hidden", name="_csrf", value=csrfToken)
                     button.btn.danger(type="submit") Löschen
                   // Clipboard: mit Fallback-Link wenn Clipboard-API nicht verfügbar ist
-                  button.btn.secondary.js-copy-job(type="button", data-jobid=job._id aria-label=`Job kopieren: ${job.title}`) Kopieren
+                  button.btn.success.js-copy-job(type="button", data-jobid=job._id aria-label=`Job kopieren: ${job.title}`) Kopieren
                   noscript
-                    a.btn.secondary(href=`/api/jobs/${job._id}?format=markdown`) Kopieren (Markdown)
-
-    p#jobs-help.muted Nutze Tab zur Navigation; Aktionen stehen rechts in jeder Zeile.
+                    a.btn.success(href=`/api/jobs/${job._id}?format=markdown`) Kopieren
 
   else
     .card.center.max-w-sm

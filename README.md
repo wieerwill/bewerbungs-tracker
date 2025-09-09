@@ -171,7 +171,7 @@ Coding-Hinweise:
 **Jobs**
 
 - `GET /api/jobs?q=&status=&sort=` – Liste (joined).
-- `POST /api/jobs` – Job anlegen. Body Felder wie `jobTitle`, `companyId`, `contactId`, `salary…`.
+- `POST /api/jobs` – Job anlegen. Body Felder wie `jobTitle`, `companyId`, `contactId`, `salary...`.
 - `GET /api/jobs/:id` – Detail (joined).
 - `PATCH /api/jobs/:id` – Partielles Update (nur übergebene Felder).
 - `DELETE /api/jobs/:id` – Löschen.
@@ -181,7 +181,7 @@ Coding-Hinweise:
 **Companies**
 
 - `GET /api/companies` – Liste.
-- `POST /api/companies` – Anlegen. Body z. B. `companyName`, `companyWebsite`, …
+- `POST /api/companies` – Anlegen. Body z. B. `companyName`, `companyWebsite`, ...
 - `GET /api/companies/:id` – Detail inkl. Kontakte.
 - `PATCH /api/companies/:id` – Partielles Update.
 - `DELETE /api/companies/:id` – Löschen.
@@ -202,7 +202,7 @@ Coding-Hinweise:
 **Importer**
 
 - `POST /api/import/glassdoor` – Body `{ url?: string, html?: string }`
-  - Lädt/parst Glassdoor-Unternehmensseite, mappt Felder (Website, Stadt, Größe, Beschreibung …).
+  - Lädt/parst Glassdoor-Unternehmensseite, mappt Felder (Website, Stadt, Größe, Beschreibung ...).
   - Unbekanntes in Notizen.
 
 ## FAQ
