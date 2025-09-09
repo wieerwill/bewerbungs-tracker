@@ -1,4 +1,4 @@
-import { load } from 'cheerio';
+import { Element, load, type CheerioAPI } from 'cheerio';
 
 // Gibt den "besten" String zurück (Array -> erstes Element, trimmt)
 function toStr(v: unknown): string | null {
@@ -27,13 +27,175 @@ function norm(v: unknown): string | null {
   return decodeEntities(toStr(v));
 }
 
-function textFromHtmlFragment(fragment: unknown): string | null {
-  const s = toStr(fragment);
-  if (!s) return null;
-  const $ = load(`<div>${s}</div>`);
-  const txt = $('div').text(); // purer Text
-  const cleaned = txt.replace(/\s+/g, ' ').trim();
-  return cleaned || null;
+function normWS(s: string): string {
+  return s
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\s+\s/g, ' ')
+    .trim();
+}
+function collapseBlankLines(s: string): string {
+  return s.replace(/\n{3,}/g, '\n\n').trim();
+}
+function dedupeBlocks(md: string): string {
+  const blocks = md
+    .split(/\n{2,}/)
+    .map((b) => b.trim())
+    .filter(Boolean);
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const b of blocks) {
+    const key = b.replace(/\s+/g, ' ').toLowerCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+      out.push(b);
+    }
+  }
+  return out.join('\n\n');
+}
+
+/** Wähle die beste Description-Root im DOM */
+function selectDescriptionRoot($: CheerioAPI) {
+  let root = $('.JobDetails_jobDescription__uW_fK').first(); // aktuelle Klasse
+  if (!root.length)
+    root = $('.jobDescription, [data-test="job-description"]').first();
+  if (!root.length) {
+    // Fallback: Modul-Container
+    root = $('[data-brandviews="MODULE:n=jobview-description"]').first();
+  }
+  return root.length ? root : null;
+}
+
+/** DOM → Markdown (ohne Zusatzpakete), mit einfacher Struktur */
+function domToMarkdown(
+  $: CheerioAPI,
+  $root: ReturnType<CheerioAPI['root']> | any,
+): string {
+  const lines: string[] = [];
+
+  function walk(
+    el: Element,
+    ctx: { listDepth: number; ordered: boolean } = {
+      listDepth: 0,
+      ordered: false,
+    },
+  ) {
+    const tag = el.tagName?.toLowerCase() ?? '';
+
+    // Skip Scripte/Styles
+    if (tag === 'script' || tag === 'style' || tag === 'noscript') return;
+
+    // Blockelemente
+    if (/^h[1-6]$/.test(tag)) {
+      const level = Number(tag[1]);
+      const t = normWS($(el).text());
+      if (t) lines.push(`${'#'.repeat(Math.min(3, level))} ${t}`);
+      return;
+    }
+    if (tag === 'p') {
+      const t = inlineChildrenToMarkdown($, el);
+      if (t) lines.push(t);
+      return;
+    }
+    if (tag === 'br') {
+      lines.push('');
+      return;
+    }
+    if (tag === 'ul' || tag === 'ol') {
+      const ordered = tag === 'ol';
+      $(el)
+        .children('li')
+        .each((_i, li) => {
+          const itemText = inlineChildrenToMarkdown($, li);
+          if (itemText) {
+            const prefix = ordered ? '1.' : '-';
+            lines.push(`${'  '.repeat(ctx.listDepth)}${prefix} ${itemText}`);
+            // Nested lists
+            $(li)
+              .children('ul,ol')
+              .each((_j, sub) => {
+                walk(sub as Element, {
+                  listDepth: ctx.listDepth + 1,
+                  ordered: sub.tagName?.toLowerCase() === 'ol',
+                });
+              });
+          }
+        });
+      return;
+    }
+    if (tag === 'div' || tag === 'section' || tag === 'article') {
+      const t = inlineChildrenToMarkdown($, el);
+      if (t) lines.push(t);
+      $(el)
+        .children()
+        .each((_i, c) => walk(c as Element, ctx));
+      return;
+    }
+
+    // Default: Kinder traversieren
+    $(el)
+      .children()
+      .each((_i, c) => walk(c as Element, ctx));
+  }
+
+  function inlineChildrenToMarkdown($: CheerioAPI, el: Element): string {
+    let out = '';
+    $(el)
+      .contents()
+      .each((_i, node) => {
+        if (node.type === 'text') {
+          const t = normWS($(node).text());
+          if (t) out += t;
+          return;
+        }
+        if (node.type === 'tag') {
+          const tag = node.tagName?.toLowerCase() ?? '';
+          if (tag === 'br') {
+            out += '\n';
+            return;
+          }
+          if (tag === 'strong' || tag === 'b') {
+            const t = inlineChildrenToMarkdown($, node as Element);
+            if (t) out += `**${t}**`;
+            return;
+          }
+          if (tag === 'em' || tag === 'i') {
+            const t = inlineChildrenToMarkdown($, node as Element);
+            if (t) out += `*${t}*`;
+            return;
+          }
+          if (tag === 'a') {
+            const t =
+              inlineChildrenToMarkdown($, node as Element) ||
+              normWS($(node).attr('href') || '');
+            const href = $(node).attr('href');
+            if (t && href) out += `[${t}](${href})`;
+            else if (t) out += t;
+            return;
+          }
+          if (/^h[1-6]$/.test(tag) || tag === 'p') {
+            // Blocke als Zeilenumbruch trennen
+            const t = inlineChildrenToMarkdown($, node as Element);
+            if (t) out += (out ? '\n' : '') + t;
+            return;
+          }
+          // Standard: weiter runter
+          const t = inlineChildrenToMarkdown($, node as Element);
+          if (t) out += t;
+        }
+      });
+    // Zeilenbrüche aufräumen
+    out = out
+      .replace(/[ \t]+\n/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+    return out;
+  }
+
+  // Starte bei $root (kann die Description-Box sein)
+  $root.children().each((_i: number, el: Element) => walk(el));
+  // Nachbearbeitung
+  const md = collapseBlankLines(dedupeBlocks(lines.join('\n\n')));
+  return md;
 }
 
 type ParsedJobImport = {
@@ -54,48 +216,36 @@ type ParsedJobImport = {
   valid_through?: string | null; // ISO yyyy-mm-dd
 };
 
-function htmlToMarkdown(html: string): string {
-  // sehr einfacher, robuster Fallback – ausreichend zum Vorfüllen
-  return html
-    .replace(/<\s*br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n\n')
-    .replace(/<\s*(h\d)[^>]*>/gi, '\n\n**')
-    .replace(/<\s*\/h\d\s*>/gi, '**\n\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .trim();
-}
-
 function mapEmploymentType(
   v: string | string[] | undefined,
 ): ParsedJobImport['employment_type'] {
-  const t = toStr(v)?.toLowerCase();
+  const t = Array.isArray(v)
+    ? v.join(' ').toLowerCase()
+    : toStr(v)?.toLowerCase();
   if (!t) return undefined;
   if (t.includes('full')) return 'full-time';
   if (t.includes('part')) return 'part-time';
-  if (t.includes('freelance')) return 'freelance';
+  if (t.includes('freelance') || t.includes('contract')) return 'freelance';
   return undefined;
 }
 
 function mapContractType(
   v: string | undefined,
 ): ParsedJobImport['contract_type'] {
-  const t = toStr(v)?.toLowerCase();
+  const t = toStr(Array.isArray(v) ? v.join(' ') : (v as any))?.toLowerCase();
   if (!t) return undefined;
   if (t.includes('befrist')) return 'fixed-term';
   if (t.includes('unbefrist') || t.includes('perm')) return 'permanent';
-  if (t.includes('freelance') || t.includes('contractor')) return 'freelance';
+  if (t.includes('freelance') || t.includes('contract')) return 'freelance';
   return undefined;
 }
 
-function firstLdJson($: ReturnType<typeof load>): any | null {
+function firstLdJson($: CheerioAPI): any | null {
   const nodes = $('script[type="application/ld+json"]');
   for (let i = 0; i < nodes.length; i++) {
     const raw = $(nodes[i]).text().trim();
     try {
       const data = JSON.parse(raw);
-      // entweder direkt JobPosting, oder @graph mit JobPosting drin
       if (data && data['@type'] === 'JobPosting') return data;
       if (Array.isArray(data)) {
         const jp = data.find((x) => x && x['@type'] === 'JobPosting');
@@ -107,9 +257,7 @@ function firstLdJson($: ReturnType<typeof load>): any | null {
         );
         if (jp) return jp;
       }
-    } catch {
-      // ignore chunk; try next
-    }
+    } catch {}
   }
   return null;
 }
@@ -126,7 +274,6 @@ export function parseGlassdoorJobHtml(html: string): ParsedJobImport {
     out.source_url = norm(ld.url || ld['og:url'] || undefined);
     out.salary_currency = ld.salaryCurrency || null;
 
-    // location
     const loc =
       ld.jobLocation?.address?.addressLocality ||
       ld.jobLocation?.address?.addressRegion ||
@@ -136,34 +283,31 @@ export function parseGlassdoorJobHtml(html: string): ParsedJobImport {
       norm($('[data-test="location"]').first().text()) ||
       undefined;
 
-    // dates
     if (ld.datePosted) out.date_posted = String(ld.datePosted).substring(0, 10);
     if (ld.validThrough)
       out.valid_through = String(ld.validThrough).substring(0, 10);
 
-    // employment
     out.employment_type = mapEmploymentType(ld.employmentType);
     out.contract_type = mapContractType(ld.employmentType as string);
-
-    // company
     out.company_name = norm(ld.hiringOrganization?.name || null);
+  }
 
-    // description
-    const descFromLd = textFromHtmlFragment(ld?.description);
-    const descFromDom = textFromHtmlFragment(
-      $('.JobDetails_jobDescription__uW_fK').html(),
-    );
-    const descFromAnyDom =
-      descFromDom ||
-      textFromHtmlFragment(
-        $('.jobDescription, [data-test="job-description"]').html(),
-      );
-    out.description =
-      [descFromLd, descFromAnyDom]
-        .filter((x): x is string => typeof x === 'string' && x.length > 0)
-        .join('\n\n') || null;
-    if (out.description) {
-      out.description_md = htmlToMarkdown(String(out.description));
+  const descRoot = selectDescriptionRoot($);
+  if (descRoot) {
+    const md = domToMarkdown($, descRoot);
+    if (md) {
+      out.description_md = md;
+      out.description = md;
+    }
+  }
+
+  if (!out.description_md && ld?.description) {
+    // LD-HTML → Markdown
+    const $frag = load(`<div>${ld.description}</div>`);
+    const md = domToMarkdown($frag, $frag('div').first());
+    if (md) {
+      out.description_md = md;
+      out.description = md;
     }
   }
 
@@ -179,14 +323,6 @@ export function parseGlassdoorJobHtml(html: string): ParsedJobImport {
   if (!out.source_url) {
     const canon = $('link[rel="canonical"]').attr('href');
     if (canon) out.source_url = canon;
-  }
-
-  // Beschreibung fallback: Haupttextblock
-  if (!out.description_md) {
-    const main = $('[data-brandviews="MODULE:n=jobview-description"]')
-      .text()
-      .trim();
-    if (main) out.description_md = htmlToMarkdown(main);
   }
 
   return out;
