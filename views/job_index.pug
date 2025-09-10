@@ -11,9 +11,9 @@ block content
   .card
     form(action="/jobs", method="GET", role="search", aria-label="Suche", class="toolbar")
       span.muted Suche
-      input#q(type="text", name="q", value=(typeof q !== 'undefined' ? q : ''), placeholder="Titel, Firma, Ort ..." autocomplete="off")
+      input#q(type="text", title="searchtext", aria-label="search text" name="q", value=(typeof q !== 'undefined' ? q : ''), placeholder="Titel, Firma, Ort ...", autocomplete="off")
       span.muted Status
-      select#status(name="status")
+      select#status(name="status", title="searchstatus", aria-label="search status")
         option(value="" selected=(!status)) -- Alle --
         option(value="discovered" selected=(status==='discovered')) Entdeckt
         option(value="applied" selected=(status==='applied')) Beworben
