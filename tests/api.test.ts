@@ -205,26 +205,6 @@ describe('api - jobs', () => {
     const listQ0 = await http(app).get('/api/jobs?q=FooBarBaz');
     expect(listQ0.body.data.length).toBe(0);
 
-    // Toggle applied
-    const t1 = await http(app)
-      .post(`/api/jobs/${id}/toggle`)
-      .send({ field: 'applied' });
-    expect(t1.status).toBe(200);
-    expect(t1.body.data.applied).toBe(1);
-
-    // Toggle answer
-    const t2 = await http(app)
-      .post(`/api/jobs/${id}/toggle`)
-      .send({ field: 'answer' });
-    expect(t2.status).toBe(200);
-    expect(t2.body.data.answer).toBe(1);
-
-    // Toggle with bad field -> 400
-    const tBad = await http(app)
-      .post(`/api/jobs/${id}/toggle`)
-      .send({ field: 'unknown' });
-    expect(tBad.status).toBe(400);
-
     // Partial update (PATCH)
     const upd = await http(app).patch(`/api/jobs/${id}`).send({
       jobNote: 'Interessant',

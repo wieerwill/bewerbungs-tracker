@@ -40,8 +40,7 @@ export interface JobRecord {
   title: string;
   description?: string | null; // Markdown
   note?: string | null; // Markdown
-  applied: 0 | 1;
-  answer: 0 | 1;
+  status: JobStatus;
   company_id?: string | null;
   contact_id?: string | null;
   salary_min?: number | null;
@@ -77,8 +76,7 @@ export interface JobViewModel {
   title: string;
   description: string;
   note: string;
-  applied: boolean;
-  answer: boolean;
+  status: JobStatus;
   company_id: string | null;
   contact_id: string | null;
   salary_min: number | null;
@@ -123,10 +121,18 @@ export interface JobViewModel {
 
 export interface ListJobsParams {
   query?: string;
-  status?: '' | 'applied' | 'not-applied' | 'answered' | 'no-answer';
+  status?: '' | JobStatus;
   sort?: '' | 'title' | 'company';
 }
 
 export interface ListCompaniesParams {
   query?: string;
 }
+
+export type JobStatus =
+  | 'discovered'
+  | 'applied'
+  | 'answered'
+  | 'invited'
+  | 'rejected'
+  | 'offer';

@@ -1,5 +1,4 @@
 import type { Express, Request, Response } from 'express';
-import type { Statements } from './statements';
 import {
   companyRowToVm,
   contactRowToVm,
@@ -9,6 +8,7 @@ import {
   requestToJob,
 } from './helpers';
 import { renderMarkdown } from './markdown';
+import type { Statements } from './statements';
 import type { ListJobsParams } from './types';
 
 const getStr = (v: unknown, fallback = ''): string =>
@@ -22,6 +22,25 @@ function getEnum<T extends string>(
     ? (v as T)
     : undefined;
 }
+
+const JOB_STATUSES = [
+  'discovered',
+  'applied',
+  'answered',
+  'invited',
+  'rejected',
+  'offer',
+] as const;
+type JobStatus = (typeof JOB_STATUSES)[number];
+
+const asStatus = (v: unknown): JobStatus | null => {
+  const s = String(v ?? '')
+    .trim()
+    .toLowerCase();
+  return (JOB_STATUSES as readonly string[]).includes(s)
+    ? (s as JobStatus)
+    : null;
+};
 
 function qParams(req: Request): ListJobsParams {
   const status = getEnum(getStr(req.query.status), [
@@ -55,8 +74,6 @@ function redirectWithMsg(
   return res.redirect(code, url);
 }
 
-type ToggleField = 'applied' | 'answer';
-
 export default function registerRoutes(app: Express, s: Statements) {
   /* --- Legacy-redirects --- */
   app.get('/', (_req, res) => res.redirect(301, '/jobs'));
@@ -80,7 +97,10 @@ export default function registerRoutes(app: Express, s: Statements) {
   });
 
   app.post('/jobs', (req, res) => {
-    const rec = requestToJob(req.body);
+    const rec = requestToJob({
+      ...req.body,
+      status: req.body?.status ?? 'discovered',
+    });
     if (!rec.title) {
       return redirectWithMsg(res, '/jobs/new', 'Titel ist erforderlich');
     }
@@ -108,7 +128,13 @@ export default function registerRoutes(app: Express, s: Statements) {
       companies.map((c) => [c.id, s.listContactsForCompany(c.id)]),
     );
     const msg = getStr(req.query.msg, null as unknown as string | undefined);
-    res.render('job_edit', { job, msg, companies, contactsByCompany });
+    res.render('job_edit', {
+      job,
+      msg,
+      companies,
+      contactsByCompany,
+      JOB_STATUSES,
+    });
   });
 
   app.post('/jobs/:id', (req, res) => {
@@ -116,25 +142,30 @@ export default function registerRoutes(app: Express, s: Statements) {
     if (!row)
       return redirectWithMsg(res, '/jobs', 'Kein Job zu dieser ID gefunden');
     const currentVm = jobRowToVm({ ...(row as any) });
-    const rec = requestToJob(req.body, currentVm);
+
+    // Status aus Body validieren, ansonsten bisherigen Status behalten
+    const nextStatus =
+      asStatus(req.body?.status) ?? (row as any).status ?? 'discovered';
+
+    const rec = requestToJob({ ...req.body, status: nextStatus }, currentVm);
     s.updateJob(rec);
     return res.redirect(303, `/jobs/${rec.id}`);
   });
 
-  app.post('/jobs/:id/toggle/:field', (req, res) => {
+  app.post('/jobs/:id/status', (req, res) => {
     const id = String(req.params.id);
-    const field = String(req.params.field) as ToggleField;
-    const row = s.getJobById(id);
-    if (!row)
+    const current = s.getJobById(id);
+    if (!current)
       return redirectWithMsg(res, '/jobs', 'Kein Job zu dieser ID gefunden');
 
-    const vm = jobRowToVm({ ...(row as any) });
-    if (field === 'applied') vm.applied = !vm.applied;
-    else if (field === 'answer') vm.answer = !vm.answer;
-    else return redirectWithMsg(res, `/jobs/${id}`, 'Unbekanntes Feld');
+    const next = asStatus(req.body.status);
+    if (!next) return redirectWithMsg(res, `/jobs/${id}`, 'Ungültiger Status');
 
-    s.updateJob(requestToJob({}, vm));
-    return res.redirect(303, `/jobs/${id}`);
+    s.updateJobStatus(id, next);
+    return res.redirect(
+      303,
+      `/jobs/${id}?msg=${encodeURIComponent('Status aktualisiert')}`,
+    );
   });
 
   app.delete('/jobs/:id', (req, res) => {

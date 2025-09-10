@@ -1,10 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-  requestToCompany,
-  requestToJob,
-  jobRowToVm,
   companiesToCsv,
   formatJobForClipboard,
+  jobRowToVm,
+  requestToCompany,
+  requestToJob,
 } from '../src/helpers';
 import type { JobJoinedRow } from '../src/types';
 
@@ -26,7 +26,6 @@ describe('helpers - mapping & formatting', () => {
     expect(base.salary_min).toBe(65000);
     expect(base.salary_target).toBe(70000);
     expect(base.salary_period).toBe('year');
-    expect(base.applied).toBe(0);
   });
 
   it('jobRowToVm maps booleans and nested company/contact safely', () => {
@@ -35,8 +34,7 @@ describe('helpers - mapping & formatting', () => {
       title: 'QA',
       description: null as any,
       note: null as any,
-      applied: 1,
-      answer: 0,
+      status: 'applied',
       company_id: null,
       contact_id: null,
       company_name: null as any,
@@ -47,8 +45,7 @@ describe('helpers - mapping & formatting', () => {
       contact_phone: null as any,
     } as any;
     const vm = jobRowToVm(row);
-    expect(vm.applied).toBe(true);
-    expect(vm.answer).toBe(false);
+    expect(vm.status).toBe('applied');
     expect(vm.company.name).toBe('');
     expect(vm.contact.email).toBe('');
   });
@@ -80,8 +77,7 @@ describe('helpers - mapping & formatting', () => {
       title: 'Backend Dev',
       description: 'Node & SQL',
       note: 'Team wirkte nett',
-      applied: 1,
-      answer: 0,
+      status: 'discovered',
       company_name: 'Globex',
       company_website: 'globex.example',
       contact_name: 'Alice',
@@ -103,7 +99,6 @@ describe('helpers - mapping & formatting', () => {
     expect(md).toMatch(/^# Backend Dev/m);
     expect(md).toMatch(/## Unternehmen/);
     expect(md).toMatch(/## Rahmen & Vergütung/);
-    expect(md).toMatch(/Angeschrieben: Ja/);
     expect(md).toContain('Globex');
     expect(md).toContain('Node & SQL');
   });

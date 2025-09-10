@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { makeTestDb, mkCompany, mkContact, mkJob } from './util';
 
 describe('statements - integrity & cascades', () => {
@@ -44,23 +44,19 @@ describe('statements - integrity & cascades', () => {
     expect(j.company_id).toBeNull();
   });
 
-  it('update job toggles applied/answer without touching other fields', () => {
+  it('update job toggles status without touching other fields', () => {
     const { s } = makeTestDb();
-    s.insertJob(
-      mkJob({ id: 'j1', applied: 0, answer: 0, note: 'keep' }) as any,
-    );
+    s.insertJob(mkJob({ id: 'j1', status: 'applied', note: 'keep' }) as any);
     const before = s.getJobById('j1')!;
 
-    s.updateJob({ ...before, applied: 1 } as any);
+    s.updateJob({ ...before, status: 'answered' } as any);
     const mid = s.getJobById('j1')!;
-    expect(mid.applied).toBe(1);
-    expect(mid.answer).toBe(0);
+    expect(mid.status).toBe('answered');
     expect(mid.note).toBe('keep');
 
-    s.updateJob({ ...mid, answer: 1 } as any);
+    s.updateJob({ ...mid, status: 'invited' } as any);
     const after = s.getJobById('j1')!;
-    expect(after.applied).toBe(1);
-    expect(after.answer).toBe(1);
+    expect(after.status).toBe('invited');
     expect(after.note).toBe('keep');
   });
 });

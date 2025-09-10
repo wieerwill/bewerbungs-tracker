@@ -16,23 +16,19 @@ block content
             input(type="hidden", name="_csrf", value=csrfToken)
             button.btn.danger(type="submit" aria-label="Bewerbung löschen") Löschen
 
-    if job && (job.applied !== undefined || job.answer !== undefined)
-      .stack-12
-        .buttons
-          form(method="POST", action=`/jobs/${job._id}/toggle/applied`, style="display:inline")
-            input(type="hidden", name="_csrf", value=csrfToken)
-            button.btn.secondary(
-              class=job.applied ? 'active' : ''
-              type="submit"
-              aria-pressed=(job.applied ? 'true' : 'false')
-            )= job.applied ? 'Angeschrieben ✓' : 'Noch nicht angeschrieben'
-          form(method="POST", action=`/jobs/${job._id}/toggle/answer`, style="display:inline")
-            input(type="hidden", name="_csrf", value=csrfToken)
-            button.btn.secondary(
-              class=job.answer ? 'active' : ''
-              type="submit"
-              aria-pressed=(job.answer ? 'true' : 'false')
-            )= job.answer ? 'Antwort erhalten ✓' : 'Keine Antwort'
+  if job
+    .card
+        form(method="POST", action=`/jobs/${job._id}/status`, class="toolbar" aria-label="Bewerbungsstatus ändern")
+          input(type="hidden", name="_csrf", value=csrfToken)
+          span.muted Status
+          select#job-status(name="status", required)
+            option(value="discovered" selected=(job.status==='discovered')) Entdeckt
+            option(value="applied" selected=(job.status==='applied')) Beworben
+            option(value="answered" selected=(job.status==='answered')) Antwort erhalten
+            option(value="invited" selected=(job.status==='invited')) Eingeladen
+            option(value="rejected" selected=(job.status==='rejected')) Abgelehnt
+            option(value="offer" selected=(job.status==='offer')) Angebot erhalten
+          button.btn.secondary(type="submit") Status speichern
 
   if msg
     .card(role="status" aria-live="polite")
@@ -204,19 +200,3 @@ block content
         .meta-item
           span.meta-label Job ID&nbsp;&nbsp;
           span.meta-value= job._id
-      if job && job.applied !== undefined
-        .meta-item
-          span.meta-label Angeschrieben&nbsp;&nbsp;
-          span.meta-value
-            if job.applied
-              span.badge.badge-ok Ja
-            else
-              span.badge.badge-no Nein
-      if job && job.answer !== undefined
-        .meta-item
-          span.meta-label Antwort&nbsp;&nbsp;
-          span.meta-value
-            if job.answer
-              span.badge.badge-ok Ja
-            else
-              span.badge.badge-no Nein

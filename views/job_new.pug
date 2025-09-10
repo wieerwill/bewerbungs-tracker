@@ -18,8 +18,7 @@ block content
       // Stelle
       fieldset.form-section
         legend Stelle
-        .row.row-2
-          .field
+        .field
             label(for="job-title") Titel *
             input#job-title(
               type="text"
@@ -32,11 +31,11 @@ block content
             )
             if errors && errors.jobTitle
               p#err-title.role-alert(role="alert")= errors.jobTitle
-          .field
+        .field
             label(for="job-description") Beschreibung
             textarea#job-description(
               name="jobDescription"
-              rows="4"
+              rows="6"
               placeholder="Kurzbeschreibung oder relevante Punkte ..."
             )
         .field

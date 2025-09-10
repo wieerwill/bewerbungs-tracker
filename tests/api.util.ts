@@ -1,19 +1,15 @@
 // tests/api.util.ts
+import BetterSqlite3 from 'better-sqlite3';
 import express from 'express';
 import request from 'supertest';
-import BetterSqlite3 from 'better-sqlite3';
-import createStatements from '../src/statements';
 import { createApiRouter } from '../src/api';
-
-// Falls du eine Factory in src/database exportierst, kannst du sie stattdessen nutzen.
-// import createDatabase from '../src/database';
+import createStatements from '../src/statements';
 
 export function makeMemoryDb() {
   const db = new BetterSqlite3(':memory:');
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
 
-  // Schema von eurer App – identisch zu src/database.ts
   db.exec(`
     CREATE TABLE IF NOT EXISTS companies (
       id TEXT PRIMARY KEY,
@@ -50,8 +46,8 @@ export function makeMemoryDb() {
       title TEXT NOT NULL,
       description TEXT,
       note TEXT,
-      applied INTEGER DEFAULT 0,
-      answer INTEGER DEFAULT 0,
+      status TEXT NOT NULL DEFAULT 'discovered'
+        CHECK (status IN ('discovered','applied','answered','invited','rejected','offer','accepted','withdrawn')),
       company_id TEXT,
       contact_id TEXT,
       salary_min REAL,

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { makeTestDb, mkCompany, mkJob } from './util';
 
 describe('statements - search/filter/sort', () => {
@@ -41,27 +41,19 @@ describe('statements - search/filter/sort', () => {
     expect(s.listJobs({ query: 'Hamburg' }).map((j) => j.id)).toEqual(['j2']);
   });
 
-  it('filters by status applied / not-applied / answered / no-answer', () => {
+  it('filters by status', () => {
     const { s } = makeTestDb();
-    s.insertJob(mkJob({ id: 'a', title: 'A', applied: 1, answer: 0 }) as any);
-    s.insertJob(mkJob({ id: 'b', title: 'B', applied: 0, answer: 1 }) as any);
-    s.insertJob(mkJob({ id: 'c', title: 'C', applied: 0, answer: 0 }) as any);
+    s.insertJob(mkJob({ id: 'a', title: 'A', status: 'discovered' }) as any);
+    s.insertJob(mkJob({ id: 'b', title: 'B', status: 'discovered' }) as any);
+    s.insertJob(mkJob({ id: 'c', title: 'C', status: 'applied' }) as any);
 
-    expect(s.listJobs({ status: 'applied' }).map((j) => j.id)).toEqual(['a']);
+    expect(s.listJobs({ status: 'applied' }).map((j) => j.id)).toEqual(['c']);
     expect(
       s
-        .listJobs({ status: 'not-applied' })
+        .listJobs({ status: 'discovered' })
         .map((j) => j.id)
         .sort(),
-    ).toEqual(['b', 'c']);
-    expect(s.listJobs({ status: 'answered' }).map((j) => j.id)).toEqual(['b']);
-
-    expect(
-      s
-        .listJobs({ status: 'no-answer' })
-        .map((j) => j.id)
-        .sort(),
-    ).toEqual(['a', 'c']);
+    ).toEqual(['a', 'b']);
   });
 
   it('sorts by title and by company (case-insensitive)', () => {

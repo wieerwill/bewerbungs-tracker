@@ -2,14 +2,15 @@ import type { SqliteDatabase } from './database';
 import type {
   Company,
   Contact,
+  ContractType,
+  EmploymentType,
   JobJoinedRow,
   JobRecord,
+  JobStatus,
   ListJobsParams,
   SalaryPeriod,
-  WorkMode,
   Seniority,
-  EmploymentType,
-  ContractType,
+  WorkMode,
 } from './types';
 
 /* ---------- helpers: coercion & guards ---------- */
@@ -56,6 +57,21 @@ const asContract = (v: unknown): ContractType | null =>
     ? (v as ContractType)
     : null;
 
+const asStatus = (v: unknown): JobStatus => {
+  const s = String(v ?? '')
+    .trim()
+    .toLowerCase();
+  const allowed: JobStatus[] = [
+    'discovered',
+    'applied',
+    'answered',
+    'invited',
+    'rejected',
+    'offer',
+  ];
+  return (allowed as string[]).includes(s) ? (s as JobStatus) : 'discovered';
+};
+
 /* ---------- normalizers (strict in, clean out) ---------- */
 
 function normalizeCompany(row: Partial<Company>): Company {
@@ -81,13 +97,17 @@ function normalizeCompany(row: Partial<Company>): Company {
 }
 
 function normalizeJob(row: Partial<JobRecord>): JobRecord {
+  let status = row.status as JobStatus | undefined;
+  if (!status) {
+    status = 'discovered';
+  }
+
   return {
     id: String(row.id!),
     title: String(row.title!),
     description: strOrNull(row.description),
     note: strOrNull(row.note),
-    applied: (row.applied ?? 0) as 0 | 1,
-    answer: (row.answer ?? 0) as 0 | 1,
+    status: asStatus(status ?? row.status ?? 'discovered'),
 
     company_id: strOrNull(row.company_id),
     contact_id: strOrNull(row.contact_id),
@@ -189,32 +209,38 @@ export default function createStatements(db: SqliteDatabase) {
 
   /* Jobs */
   const stmtInsertJob = db.prepare(`
-    INSERT INTO jobs (
-      id,title,description,note,applied,answer,company_id,contact_id,
-      salary_min,salary_max,salary_target,salary_currency,salary_period,
-      work_mode,remote_ratio,seniority,employment_type,contract_type,
-      start_date,deadline_date,source_url,application_channel,referral
-    ) VALUES (
-      @id,@title,@description,@note,@applied,@answer,@company_id,@contact_id,
-      @salary_min,@salary_max,@salary_target,@salary_currency,@salary_period,
-      @work_mode,@remote_ratio,@seniority,@employment_type,@contract_type,
-      @start_date,@deadline_date,@source_url,@application_channel,@referral
-    )
-  `);
+  INSERT INTO jobs (
+    id,title,description,note,status,company_id,contact_id,
+    salary_min,salary_max,salary_target,salary_currency,salary_period,
+    work_mode,remote_ratio,seniority,employment_type,contract_type,
+    start_date,deadline_date,source_url,application_channel,referral
+  ) VALUES (
+    @id,@title,@description,@note,@status,@company_id,@contact_id,
+    @salary_min,@salary_max,@salary_target,@salary_currency,@salary_period,
+    @work_mode,@remote_ratio,@seniority,@employment_type,@contract_type,
+    @start_date,@deadline_date,@source_url,@application_channel,@referral
+  )
+`);
 
   const stmtUpdateJob = db.prepare(`
-    UPDATE jobs SET
-      title=@title, description=@description, note=@note,
-      applied=@applied, answer=@answer,
-      company_id=@company_id, contact_id=@contact_id,
-      salary_min=@salary_min, salary_max=@salary_max, salary_target=@salary_target,
-      salary_currency=@salary_currency, salary_period=@salary_period,
-      work_mode=@work_mode, remote_ratio=@remote_ratio, seniority=@seniority,
-      employment_type=@employment_type, contract_type=@contract_type,
-      start_date=@start_date, deadline_date=@deadline_date,
-      source_url=@source_url, application_channel=@application_channel, referral=@referral,
-      updated_at=datetime('now')
-    WHERE id=@id
+  UPDATE jobs SET
+    title=@title, description=@description, note=@note,
+    status=@status, company_id=@company_id, contact_id=@contact_id,
+    salary_min=@salary_min, salary_max=@salary_max, salary_target=@salary_target,
+    salary_currency=@salary_currency, salary_period=@salary_period,
+    work_mode=@work_mode, remote_ratio=@remote_ratio, seniority=@seniority,
+    employment_type=@employment_type, contract_type=@contract_type,
+    start_date=@start_date, deadline_date=@deadline_date,
+    source_url=@source_url, application_channel=@application_channel, referral=@referral,
+    updated_at=datetime('now')
+  WHERE id=@id
+`);
+
+  const stmtUpdateJobStatus = db.prepare(`
+    UPDATE jobs
+    SET status = @status,
+        updated_at = datetime('now')
+    WHERE id = @id
   `);
 
   const stmtDeleteJobById = db.prepare(`DELETE FROM jobs WHERE id = ?`);
@@ -224,22 +250,30 @@ export default function createStatements(db: SqliteDatabase) {
 
   function listJobs(params: ListJobsParams = {}): JobJoinedRow[] {
     const { query, status, sort } = params;
-
     const where: string[] = [];
     const bind: Record<string, unknown> = {};
 
     if (query && query.trim()) {
       where.push(`(
-        j.title LIKE @like OR j.description LIKE @like OR j.note LIKE @like OR
-        c.name LIKE @like OR c.city LIKE @like OR ct.name LIKE @like
-      )`);
+      j.title LIKE @like OR j.description LIKE @like OR j.note LIKE @like OR
+      c.name LIKE @like OR c.city LIKE @like OR ct.name LIKE @like
+    )`);
       bind.like = `%${query.trim()}%`;
     }
 
-    if (status === 'applied') where.push(`j.applied = 1`);
-    else if (status === 'not-applied') where.push(`j.applied = 0`);
-    else if (status === 'answered') where.push(`j.answer = 1`);
-    else if (status === 'no-answer') where.push(`j.answer = 0`);
+    // Status-Filter
+    const allowed: JobStatus[] = [
+      'discovered',
+      'applied',
+      'answered',
+      'invited',
+      'rejected',
+      'offer',
+    ];
+    if (status && (allowed as string[]).includes(status)) {
+      where.push(`j.status = @status`);
+      bind.status = status;
+    }
 
     let order = `j.created_at DESC`;
     if (sort === 'title') order = `j.title COLLATE NOCASE ASC`;
@@ -247,20 +281,20 @@ export default function createStatements(db: SqliteDatabase) {
 
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
     const sql = `
-      SELECT
-        j.*,
-        c.name    AS company_name,
-        c.website AS company_website,
-        c.city    AS company_city,
-        ct.name   AS contact_name,
-        ct.email  AS contact_email,
-        ct.phone  AS contact_phone
-      FROM jobs j
-      LEFT JOIN companies c ON c.id = j.company_id
-      LEFT JOIN contacts  ct ON ct.id = j.contact_id
-      ${whereSql}
-      ORDER BY ${order}
-    `;
+    SELECT
+      j.*,
+      c.name    AS company_name,
+      c.website AS company_website,
+      c.city    AS company_city,
+      ct.name   AS contact_name,
+      ct.email  AS contact_email,
+      ct.phone  AS contact_phone
+    FROM jobs j
+    LEFT JOIN companies c ON c.id = j.company_id
+    LEFT JOIN contacts  ct ON ct.id = j.contact_id
+    ${whereSql}
+    ORDER BY ${order}
+  `;
     return db.prepare(sql).all(bind) as JobJoinedRow[];
   }
 
@@ -281,6 +315,10 @@ export default function createStatements(db: SqliteDatabase) {
       LIMIT 1
     `;
     return db.prepare(sql).get(id) as JobJoinedRow | undefined;
+  }
+
+  function updateJobStatus(id: string, status: JobRecord['status']) {
+    return stmtUpdateJobStatus.run({ id, status });
   }
 
   /* ---------- typed wrappers ---------- */
@@ -358,6 +396,7 @@ export default function createStatements(db: SqliteDatabase) {
     // jobs
     insertJob,
     updateJob,
+    updateJobStatus,
     deleteJob,
     getJobById,
     listJobs,

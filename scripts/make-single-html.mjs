@@ -1,5 +1,5 @@
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -39,8 +39,7 @@ const html = `<!doctype html>
         <td>\${i+1}</td>
         <td>\${j.title || '—'}</td>
         <td>\${(j.company && j.company.name) || j.company_name || '—'}</td>
-        <td>\${j.applied ? 'Ja' : 'Nein'}</td>
-        <td>\${j.answer ? 'Ja' : 'Nein'}</td>
+        <td>\${j.status}</td>
         <td><button class="btn secondary js-copy-job" data-jobid="\${j._id || j.id}">Kopieren</button></td>
       </tr>\`).join('');
     el.innerHTML = \`

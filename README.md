@@ -96,7 +96,7 @@ Coding-Hinweise:
 
 - [x] TypeScript-Refactor, modulare Struktur in `src/`
 - [x] SQLite (serverlos), WAL, Foreign Keys
-- [x] Jobs: CRUD, applied/answer Toggle
+- [x] Jobs: CRUD, Status Toggle
 - [x] Unternehmen: eigene Entität (Name unique), Kontakte
 - [x] Job<->Company/Contact Zuordnung per Dropdown
 - [x] Markdown für Beschreibung/Notizen (safe)
@@ -175,7 +175,6 @@ Coding-Hinweise:
 - `GET /api/jobs/:id` – Detail (joined).
 - `PATCH /api/jobs/:id` – Partielles Update (nur übergebene Felder).
 - `DELETE /api/jobs/:id` – Löschen.
-- `POST /api/jobs/:id/toggle` – Body `{ "field": "applied"|"answer" }`.
 - `GET /api/jobs/:id/clipboard` – Markdown-Export (Text).
 
 **Companies**

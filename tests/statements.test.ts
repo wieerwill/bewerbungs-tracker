@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { makeTestDb, mkCompany, mkJob } from './util';
 
 describe('statements - remaining edges', () => {
@@ -25,11 +25,11 @@ describe('statements - remaining edges', () => {
 
   it('updateJob with null salary/meta keeps flags', () => {
     const { s } = makeTestDb();
-    const j = mkJob({ id: 'j1', applied: 1, answer: 0 });
+    const j = mkJob({ id: 'j1', status: 'answered' });
     s.insertJob(j as any);
     s.updateJob({ ...j, salary_min: null, salary_period: null } as any);
     const out = s.getJobById('j1')!;
-    expect(out.applied).toBe(1);
+    expect(out.status).toBe('answered');
     expect(out.salary_min).toBeNull();
   });
 });

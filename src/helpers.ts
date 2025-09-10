@@ -2,14 +2,15 @@ import { v4 as uuidv4 } from 'uuid';
 import type {
   Company,
   Contact,
+  ContractType,
+  EmploymentType,
   JobJoinedRow,
   JobRecord,
+  JobStatus,
   JobViewModel,
   SalaryPeriod,
-  WorkMode,
   Seniority,
-  EmploymentType,
-  ContractType,
+  WorkMode,
 } from './types';
 
 const str = (v: unknown): string | null => {
@@ -113,8 +114,7 @@ export function requestToJob(
     description: str(body.jobDescription),
     note: str(body.jobNote),
 
-    applied: flag01(body.applied ?? current?.applied ?? false),
-    answer: flag01(body.answer ?? current?.answer ?? false),
+    status: body.status as JobStatus,
 
     company_id,
     contact_id,
@@ -182,8 +182,7 @@ export function jobRowToVm(row: any): JobViewModel {
     description: (row.description ?? '') as string,
     note: (row.note ?? '') as string,
 
-    applied: !!row.applied,
-    answer: !!row.answer,
+    status: row.status as JobStatus,
 
     company_id: row.company_id ?? null,
     contact_id: row.contact_id ?? null,
@@ -212,7 +211,6 @@ export function jobRowToVm(row: any): JobViewModel {
       city: row.company_city ?? '',
       street: row.company_street ?? undefined,
       note: row.company_note ?? undefined,
-      // optionale Felder falls vorhanden (schaden nicht)
       linkedin_url: row.linkedin_url ?? null,
       glassdoor_url: row.glassdoor_url ?? null,
       stepstone_url: row.stepstone_url ?? null,
@@ -261,8 +259,7 @@ export function formatJobForClipboard(j: JobJoinedRow): string {
   if (j.contact_email) lines.push(`- E-Mail: ${j.contact_email}`);
   if (j.contact_phone) lines.push(`- Telefon: ${j.contact_phone}`);
   lines.push('', '## Status');
-  lines.push(`- Angeschrieben: ${j.applied ? 'Ja' : 'Nein'}`);
-  lines.push(`- Antwort: ${j.answer ? 'Ja' : 'Nein'}`);
+  lines.push(`- Status: ${j.status}`);
   lines.push('', '## Rahmen & Vergütung');
   lines.push(
     `- Spanne: ${money((j as any).salary_min, (j as any).salary_currency, (j as any).salary_period)} - ${money((j as any).salary_max, (j as any).salary_currency, (j as any).salary_period)}`,
@@ -390,11 +387,9 @@ export type ImportedCompanyRow = {
   glassdoor_url?: string | null;
   stepstone_url?: string | null;
   size_range?: string | null;
-  // tolerant für zusätzliche Spalten (werden in Notiz eingehängt)
   _extraNote?: string | null;
 };
 
-// akzeptiert Header mit oder ohne "id", sowie "linkedin"|"linkedin_url" usw.
 export function parseCompaniesCsv(csv: string): ImportedCompanyRow[] {
   const rows = parseCsv(csv);
   if (!rows.length) return [];

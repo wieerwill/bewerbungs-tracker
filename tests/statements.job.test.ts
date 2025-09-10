@@ -1,12 +1,12 @@
-import { describe, it, expect } from 'vitest';
-import { makeTestDb } from './util';
+import { describe, expect, it } from 'vitest';
 import { requestToJob } from '../src/helpers';
+import { makeTestDb } from './util';
 
 describe('statements - jobs', () => {
   it('creates job without company/contact', () => {
     const { s } = makeTestDb();
 
-    s.insertJob({ id: 'j1', title: 'Engineer', applied: 0, answer: 0 } as any);
+    s.insertJob({ id: 'j1', title: 'Engineer', status: 'discovered' } as any);
     const row = s.getJobById('j1');
     expect(row?.title).toBe('Engineer');
 
@@ -33,8 +33,7 @@ describe('statements - jobs', () => {
       id: 'j1',
       title: 'Backend Dev',
       description: 'Go/Node',
-      applied: 1,
-      answer: 0,
+      status: 'applied',
       company_id: 'c1',
       contact_id: 'ct1',
       salary_min: 60000,
@@ -47,7 +46,7 @@ describe('statements - jobs', () => {
     expect(j.title).toBe('Backend Dev');
     expect(j.company_name).toBe('Acme');
     expect(j.contact_name).toBe('Alice');
-    expect(j.applied).toBe(1);
+    expect(j.status).toBe('applied');
     expect(j.salary_min).toBe(60000);
   });
 
@@ -60,15 +59,13 @@ describe('statements - jobs', () => {
     s.insertJob({
       id: 'a',
       title: 'Alpha',
-      applied: 1,
-      answer: 0,
+      status: 'applied',
       company_id: 'c1',
     } as any);
     s.insertJob({
       id: 'b',
       title: 'Beta',
-      applied: 0,
-      answer: 1,
+      status: 'invited',
       company_id: 'c2',
     } as any);
 

@@ -1,6 +1,6 @@
-import path from 'path';
-import fs from 'fs';
 import Database from 'better-sqlite3';
+import fs from 'fs';
+import path from 'path';
 
 interface DatabaseOptions {
   baseDir: string;
@@ -58,8 +58,8 @@ export default function createDatabase({ baseDir }: DatabaseOptions) {
       title TEXT NOT NULL,
       description TEXT,
       note TEXT,
-      applied INTEGER DEFAULT 0,
-      answer INTEGER DEFAULT 0,
+      status TEXT NOT NULL DEFAULT 'discovered'
+        CHECK (status IN ('discovered','applied','answered','invited','rejected','offer','accepted','withdrawn')),
       company_id TEXT,
       contact_id TEXT,
       salary_min REAL,
@@ -82,6 +82,12 @@ export default function createDatabase({ baseDir }: DatabaseOptions) {
       FOREIGN KEY(company_id) REFERENCES companies(id) ON DELETE SET NULL,
       FOREIGN KEY(contact_id) REFERENCES contacts(id) ON DELETE SET NULL
     );
+  `);
+
+  // Index für häufige Filter
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);
+    CREATE INDEX IF NOT EXISTS idx_jobs_company ON jobs(company_id);
   `);
 
   return db;
