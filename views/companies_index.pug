@@ -33,7 +33,6 @@ block content
             th(scope="col") Name
             th(scope="col") Website
             th(scope="col") Ort
-            th(scope="col") Größe
             th(scope="col") Profile
             th(scope="col") Aktionen
         tbody
@@ -45,11 +44,11 @@ block content
                 a.table-link(href=`/companies/${c._id}`)= c.name
               td
                 if site
-                  a.truncate(href=site rel="noopener noreferrer" title=c.website)= c.website
+                  - const label = (c.website || '').replace(/^(https?:)?\/\/(www\.)?/i, '').replace(/\/+$/,'');
+                  a.truncate(href=site rel="noopener noreferrer" title=c.website)= label
                 else
                   | —
               td= c.city || '—'
-              td= c.size_range || '—'
               td.nowrap
                 if c.linkedin_url
                   a.pill(href=c.linkedin_url rel="noopener noreferrer" title="LinkedIn Profil")

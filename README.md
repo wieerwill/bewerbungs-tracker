@@ -123,6 +123,7 @@ Coding-Hinweise:
 - [ ] Datei-Anhänge (z. B. PDF CV, Anschreiben) - lokal unter `/uploads`
 - [ ] Aktivitäten/Timeline pro Job (Follow-ups, Termine)
 - [ ] i18n (Deutsch/Englisch Umschaltbar)
+- [ ] Screenshots aktualisieren
 
 ## FAQ
 

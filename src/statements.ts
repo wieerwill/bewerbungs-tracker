@@ -305,6 +305,8 @@ export default function createStatements(db: SqliteDatabase) {
         c.name    AS company_name,
         c.website AS company_website,
         c.city    AS company_city,
+        c.note    AS company_note,
+        c.industry AS company_industry,
         ct.name   AS contact_name,
         ct.email  AS contact_email,
         ct.phone  AS contact_phone

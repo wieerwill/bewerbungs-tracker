@@ -1,23 +1,23 @@
 import express, { Router, type Request, type Response } from 'express';
-import type { Statements } from './statements';
+import { v4 as uuidv4 } from 'uuid';
 import {
   companiesToCsv,
-  jobRowToVm,
   companyRowToVm,
   contactRowToVm,
-  requestToJob,
+  formatJobForClipboard,
+  jobRowToVm,
+  mergeCompanyFields,
+  parseCompaniesCsv,
   requestToCompany,
   requestToContact,
-  formatJobForClipboard,
-  parseCompaniesCsv,
-  mergeCompanyFields,
+  requestToJob,
 } from './helpers';
-import { v4 as uuidv4 } from 'uuid';
 import {
   fetchAndParseGlassdoor,
   parseGlassdoorHtml,
 } from './importers/glassdoor';
 import { parseGlassdoorJobHtml } from './importers/glassdoorJob';
+import type { Statements } from './statements';
 
 export function createApiRouter(s: Statements): Router {
   const api = Router();
@@ -56,14 +56,20 @@ export function createApiRouter(s: Statements): Router {
   // Read
   api.get('/jobs/:id', (req, res) => {
     const joined = s.getJobJoinedById(String(req.params.id));
-    if (!joined) return res.status(404).json({ ok: false, error: 'not_found' });
-    res.json({ ok: true, data: jobRowToVm(joined) });
+    if (!joined)
+      return res
+        .status(404)
+        .json({ ok: false, error: 'not_found', title: 'Not Found' });
+    res.json(jobRowToVm(joined));
   });
 
   // Update
   api.patch('/jobs/:id', (req, res) => {
     const row = s.getJobById(String(req.params.id));
-    if (!row) return res.status(404).json({ ok: false, error: 'not_found' });
+    if (!row)
+      return res
+        .status(404)
+        .json({ ok: false, error: 'not_found', title: 'Not Found' });
     const currentVm = jobRowToVm({ ...(row as any) });
     const merged = requestToJob(req.body, currentVm);
     s.updateJob(merged);

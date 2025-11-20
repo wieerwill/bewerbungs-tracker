@@ -157,7 +157,7 @@ describe('api - jobs', () => {
 
     const get = await http(app).get(`/api/jobs/${id}`);
     expect(get.status).toBe(200);
-    expect(get.body.data.title).toBe('Dev');
+    expect(get.body.title).toBe('Dev');
   });
 
   it('creates job with company/contact, lists and filters, updates & deletes', async () => {
